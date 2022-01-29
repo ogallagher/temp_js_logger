@@ -1,8 +1,8 @@
 {
   "name": "temp_js_logger",
   "version": "0.0.1",
-  "description": "Temporary backend/frontend logging library that patches console.log.",
-  "main": "cli_driver.js",
+  "description": "Temporary backend/frontend logging library that patches console.",
+  "main": "temp_js_logger.js",
   "scripts": {
     "test": "cli_driver.js"
   },
