@@ -1,0 +1,28 @@
+{
+  "name": "temp_js_logger",
+  "version": "0.0.1",
+  "description": "Temporary backend/frontend logging library that patches console.log.",
+  "main": "cli_driver.js",
+  "scripts": {
+    "test": "cli_driver.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ogallagher/temp_js_logger.git"
+  },
+  "keywords": [
+    "log",
+    "logging",
+    "logger",
+    "js",
+    "javascript",
+    "patch",
+    "console"
+  ],
+  "author": "Owen Gallagher",
+  "license": "SEE LICENSE IN license.txt",
+  "bugs": {
+    "url": "https://github.com/ogallagher/temp_js_logger/issues"
+  },
+  "homepage": "https://github.com/ogallagher/temp_js_logger#readme"
+}
