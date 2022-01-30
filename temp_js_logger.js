@@ -73,7 +73,7 @@ class TempLogger {
 		
 		let lineno = ''
 		if (this.with_lineno) {
-			lineno = TempLogger.get_caller_line()
+			lineno = TempLogger.get_caller_line() + '.'
 		}
 		
 		let level = TempLogger.LEVEL_ALWAYS
@@ -126,7 +126,7 @@ class TempLogger {
 				level_str = TempLogger.LEVEL_TO_STR[level]
 			}
 			
-			let prefix = ts + this.caller_tag + level_str
+			let prefix = ts + this.caller_tag + lineno + level_str
 			if (prefix.length > 0) {
 				prefix += ': '
 			}
@@ -281,7 +281,7 @@ if (typeof exports != 'undefined') {
 	
 	// setters
 	exports.set_level = TempLogger.set_level
-	exports.set_with_timestamp = TempLogger.set_timestamp
+	exports.set_with_timestamp = TempLogger.set_with_timestamp
 	exports.set_caller_name = TempLogger.set_caller_name
 	exports.set_with_lineno = TempLogger.set_with_lineno
 	exports.set_parse_level_prefix = TempLogger.set_parse_level_prefix
