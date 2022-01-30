@@ -132,6 +132,10 @@ class TempLogger {
 			}
 			
 			TempLogger.CONSOLE_METHOD[console_method_key](prefix + data)
+			
+			if (TempLogger.environment == TempLogger.ENV_FRONTEND) {
+				// show in gui
+			}
 		}
 	}
 	
@@ -212,10 +216,10 @@ class TempLogger {
 
 // "scoped" class variables
 
-TempLogger.NODE_VERSION = process.version
-TempLogger.NV_MAJOR = parseInt(
-	TempLogger.NODE_VERSION.substr(1, TempLogger.NODE_VERSION.indexOf('.'))
-)
+TempLogger.ENV_UNKNOWN = 'unknown'
+TempLogger.ENV_BACKEND = 'backend'
+TempLogger.ENV_FRONTEND = 'frontend'
+TempLogger.environment = TempLogger.ENV_UNKNOWN
 
 TempLogger.CONSOLE_METHOD = {
 	log: console.log,
@@ -271,6 +275,15 @@ for (let method_key of Object.keys(TempLogger.CONSOLE_METHOD)) {
 
 // backend nodejs exports
 if (typeof exports != 'undefined') {
+	// environment
+	TempLogger.environment = TempLogger.ENV_BACKEND
+	
+	// interpreter version
+	TempLogger.NODE_VERSION = process.version
+	TempLogger.NV_MAJOR = parseInt(
+		TempLogger.NODE_VERSION.substr(1, TempLogger.NODE_VERSION.indexOf('.'))
+	)
+	
 	exports.TempLogger = TempLogger
 	exports.root = TempLogger.root
 	
@@ -287,4 +300,8 @@ if (typeof exports != 'undefined') {
 	exports.set_parse_level_prefix = TempLogger.set_parse_level_prefix
 	exports.set_with_level = TempLogger.set_with_level
 	exports.set_with_always_level_name = TempLogger.set_with_always_level_name
+}
+else {
+	// environment
+	TempLogger.environment = TempLogger.ENV_FRONTEND
 }
