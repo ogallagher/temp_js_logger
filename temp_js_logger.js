@@ -65,7 +65,7 @@ class TempLogger {
 		this.with_always_level_name = with_always_level_name == true
 		
 		// webpage console
-		if (environment == TempLogger.ENV_FRONTEND && !TempLogger.with_webpage_console) {
+		if (TempLogger.environment == TempLogger.ENV_FRONTEND && !TempLogger.with_webpage_console) {
 			TempLogger.init_webpage_console()
 		}
 	}
@@ -310,8 +310,6 @@ TempLogger.CMP_MESSAGE_DEFAULT =
 	<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
 </div>`
 
-TempLogger.root = new TempLogger()
-
 // patch console.log
 
 for (let method_key of Object.keys(TempLogger.CONSOLE_METHOD)) {
@@ -352,3 +350,6 @@ else {
 	// environment
 	TempLogger.environment = TempLogger.ENV_FRONTEND
 }
+
+// default config
+TempLogger.root = new TempLogger()
