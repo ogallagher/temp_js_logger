@@ -9,7 +9,11 @@ class TempLogger {
 	/**
 	 * Create new TempLogger instance. All args are specified as keys in an options object.
 	 *
+	 * By default, all message metadata is hidden for gui (webpage) messages.
+	 *
 	 * @param {String} level Logging level name, case insensitive.
+	 *
+	 * @param {String} level_gui Logging level name for gui messages.
 	 * 
 	 * @param {boolean} with_timestamp Include timestamp in message.
 	 * 
@@ -29,6 +33,7 @@ class TempLogger {
 	constructor(
 		{
 			level,
+			level_gui,
 			with_timestamp, 
 			caller_name, 
 			with_lineno, 
@@ -37,6 +42,7 @@ class TempLogger {
 			with_always_level_name, 
 		} = {
 			level: TempLogger.STR_DEBUG,
+			level_gui: TempLogger.STR_INFO,
 			with_timestamp: false,
 			caller_name: undefined,
 			with_lineno: true,
@@ -46,6 +52,11 @@ class TempLogger {
 		}
 	) {
 		this.level = TempLogger.STR_TO_LEVEL[level.toUpperCase()]
+		
+		if (level_gui == undefined) {
+			level_gui = TempLogger.STR_INFO
+		}
+		this.level_gui = TempLogger.STR_TO_LEVEL[level_gui.toUpperCase()]
 		
 		// force truthy values to boolean
 		this.with_timestamp = with_timestamp == true
@@ -93,9 +104,11 @@ class TempLogger {
 					let parsed_level = TempLogger.STR_TO_LEVEL[level_str]
 					
 					if (parsed_level != undefined) {
+						// update level
 						level = parsed_level
 					}
 					
+					// remove level str from message
 					data = data.substring(m.index + m[0].length)
 				}
 			}
@@ -121,36 +134,38 @@ class TempLogger {
 			}
 		}
 		
-		// determine whether to suppress or print the message
+		let level_str = ''
+		if (
+			this.with_level && 
+			(level != TempLogger.LEVEL_ALWAYS || this.with_always_level_name)
+		) {
+			level_str = TempLogger.LEVEL_TO_STR[level]
+		}
+		
+		// determine whether to show the console message
 		if (level >= this.level) {
-			let level_str = ''
-			if (
-				this.with_level && 
-				(level != TempLogger.LEVEL_ALWAYS || this.with_always_level_name)
-			) {
-				level_str = TempLogger.LEVEL_TO_STR[level]
-			}
-			
 			let prefix = ts + this.caller_tag + lineno + level_str
 			if (prefix.length > 0) {
 				prefix += ': '
 			}
 			
-			let message = prefix + data
-			TempLogger.CONSOLE_METHOD[console_method_key](message)
+			// show in console
+			TempLogger.CONSOLE_METHOD[console_method_key](prefix + data)
+		}
+		
+		// determine whether to show the gui message
+		if (
+			TempLogger.environment == TempLogger.ENV_FRONTEND && 
+			(level >= this.level_gui && level != TempLogger.LEVEL_ALWAYS) &&
+			TempLogger.with_webpage_console
+		) {
+			// show in gui
+			let msgbox_jq = $(TempLogger.CMP_MESSAGE_DEFAULT)
+			.addClass(`alert-${TempLogger.LEVEL_TO_ALERT_COLOR[level]}`)
 			
-			if (
-				TempLogger.environment == TempLogger.ENV_FRONTEND && 
-				TempLogger.with_webpage_console
-			) {
-				// show in gui
-				let msgbox_jq = $(TempLogger.CMP_MESSAGE_DEFAULT)
-				.addClass(`alert-${TempLogger.LEVEL_TO_ALERT_COLOR[level]}`)
-				
-				msgbox_jq.find(`.${TempLogger.CMP_MESSAGE_CLASS}`).html(message)
-				
-				$(`.${TempLogger.CMP_CONSOLE_CLASS}`).append(msgbox_jq)
-			}
+			msgbox_jq.find(`.${TempLogger.CMP_MESSAGE_CLASS}`).html(data)
+			
+			$(`.${TempLogger.CMP_CONSOLE_CLASS}`).append(msgbox_jq)
 		}
 	}
 	
@@ -202,6 +217,17 @@ class TempLogger {
 		TempLogger.root.level = level
 	}
 	
+	static set_level_gui(level_gui) {
+		if (typeof level_gui == 'string') {
+			level_gui = TempLogger.STR_TO_LEVEL[level_gui.toUpperCase()]
+		}
+		if (level_gui == undefined) {
+			level_gui = TempLogger.LEVEL_INFO
+		}
+		
+		TempLogger.root.level_gui = level_gui
+	}
+	
 	static set_with_timestamp(with_timestamp) {
 		TempLogger.root.with_timestamp = with_timestamp == true
 	}
@@ -230,9 +256,15 @@ class TempLogger {
 	
 	static init_webpage_console() {
 		let console_jq = $(TempLogger.CMP_CONSOLE_DEFAULT)
-		$('body').prepend(console_jq)
+		$('body').append(console_jq)
 		
 		TempLogger.with_webpage_console = true
+	}
+	
+	static remove_webpage_console() {
+		TempLogger.with_webpage_console = false
+		
+		$(`.${TempLogger.CMP_CONSOLE_CLASS}`).remove()
 	}
 }
 
@@ -299,13 +331,13 @@ TempLogger.CSS_CLASS_PREFIX = 'temp-logger'
 
 TempLogger.CMP_CONSOLE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-console`
 TempLogger.CMP_CONSOLE_DEFAULT = 
-`<div class="${TempLogger.CMP_CONSOLE_CLASS} fixed-top px-4 pt-2">
+`<div class="${TempLogger.CMP_CONSOLE_CLASS} fixed-top px-4">
 </div>`
 
 TempLogger.CMP_MESSAGEBOX_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg-box`
 TempLogger.CMP_MESSAGE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg`
 TempLogger.CMP_MESSAGE_DEFAULT = 
-`<div class="${TempLogger.CMP_MESSAGE_CLASS} alert" alert-dismissible" role="alert">
+`<div class="${TempLogger.CMP_MESSAGE_CLASS} alert alert-dismissible my-2" role="alert">
 	<div class="row">
 		<span class="${TempLogger.CMP_MESSAGE_CLASS} col"></span>
 		<button type="button" class="btn-close col-auto" data-bs-dismiss="alert" aria-label="close"></button>
@@ -341,17 +373,21 @@ if (typeof exports != 'undefined') {
 	
 	// setters
 	exports.set_level = TempLogger.set_level
+	exports.set_level_gui = TempLogger.set_level_gui
 	exports.set_with_timestamp = TempLogger.set_with_timestamp
 	exports.set_caller_name = TempLogger.set_caller_name
 	exports.set_with_lineno = TempLogger.set_with_lineno
 	exports.set_parse_level_prefix = TempLogger.set_parse_level_prefix
 	exports.set_with_level = TempLogger.set_with_level
 	exports.set_with_always_level_name = TempLogger.set_with_always_level_name
+	
+	// default config
+	exports.config()
 }
 else {
 	// environment
 	TempLogger.environment = TempLogger.ENV_FRONTEND
+	
+	// default config
+	TempLogger.config()
 }
-
-// default config
-TempLogger.root = new TempLogger()
