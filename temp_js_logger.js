@@ -299,15 +299,17 @@ TempLogger.CSS_CLASS_PREFIX = 'temp-logger'
 
 TempLogger.CMP_CONSOLE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-console`
 TempLogger.CMP_CONSOLE_DEFAULT = 
-`<div class="${TempLogger.CMP_CONSOLE_CLASS} fixed-top">
+`<div class="${TempLogger.CMP_CONSOLE_CLASS} fixed-top px-4 pt-2">
 </div>`
 
 TempLogger.CMP_MESSAGEBOX_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg-box`
 TempLogger.CMP_MESSAGE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg`
 TempLogger.CMP_MESSAGE_DEFAULT = 
-`<div class="${TempLogger.CMP_MESSAGE_CLASS} alert" alert-dismissible" role="alert">
-	<span class="${TempLogger.CMP_MESSAGE_CLASS}"></span>
-	<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+`<div class="${TempLogger.CMP_MESSAGE_CLASS} alert opacity-25" alert-dismissible" role="alert">
+	<div class="row">
+		<span class="${TempLogger.CMP_MESSAGE_CLASS} col"></span>
+		<button type="button" class="btn-close col-auto" data-bs-dismiss="alert" aria-label="close"></button>
+	</div>
 </div>`
 
 // patch console.log
