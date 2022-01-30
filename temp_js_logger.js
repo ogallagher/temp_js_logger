@@ -9,12 +9,22 @@ class TempLogger {
 	/**
 	 * Create new TempLogger instance. All args are specified as keys in an options object.
 	 *
-	 * @param {String} level Logging level name.
+	 * @param {String} level Logging level name, case insensitive.
+	 * 
 	 * @param {boolean} with_timestamp Include timestamp in message.
+	 * 
 	 * @param {String} caller_name Include given caller name in message.
+	 * 
 	 * @param {boolean} with_lineno Include caller line number in message.
-	 * @param {boolean} parse_level_prefix 
-	 * @param {boolean} with_level
+	 * 
+	 * @param {boolean} parse_level_prefix If incoming messages will be prefixed with a logging 
+	 * level string. If false, the console method (log, info, warn, error) is used to determine
+	 * the log level.
+	 * 
+	 * @param {boolean} with_level Include level name in message.
+	 *
+	 * @param {boolean} with_always_level_name Include ALWAYS as a level name in message if
+	 * no level is specified.
 	 */
 	constructor(
 		{
@@ -23,18 +33,21 @@ class TempLogger {
 			caller_name, 
 			with_lineno, 
 			parse_level_prefix, 
-			with_level 
+			with_level,
+			with_always_level_name, 
 		} = {
 			level: TempLogger.STR_DEBUG,
 			with_timestamp: false,
 			caller_name: undefined,
 			with_lineno: true,
 			parse_level_prefix: true,
-			with_level: true
+			with_level: true,
+			with_always_level_name: false
 		}
 	) {
 		this.level = TempLogger.STR_TO_LEVEL[level.toUpperCase()]
 		
+		// force truthy values to boolean
 		this.with_timestamp = with_timestamp == true
 		
 		this.caller_tag = caller_name
@@ -49,12 +62,13 @@ class TempLogger {
 		
 		this.parse_level_prefix = parse_level_prefix == true
 		this.with_level = with_level == true
+		this.with_always_level_name = with_always_level_name == true
 	}
 	
 	log(data, console_method_key = 'log') {
 		let ts = ''
 		if (this.with_timestamp) {
-			ts = new Date().toISOString()
+			ts = new Date().toISOString() + ' '
 		}
 		
 		let lineno = ''
@@ -62,7 +76,7 @@ class TempLogger {
 			lineno = TempLogger.get_caller_line()
 		}
 		
-		let level = TempLogger.LEVEL_DEBUG
+		let level = TempLogger.LEVEL_ALWAYS
 		if (this.parse_level_prefix) {
 			// parse level from message prefix
 			if (typeof data == 'string') {
@@ -105,13 +119,19 @@ class TempLogger {
 		// determine whether to suppress or print the message
 		if (level >= this.level) {
 			let level_str = ''
-			if (this.with_level) {
+			if (
+				this.with_level && 
+				(level != TempLogger.LEVEL_ALWAYS || this.with_always_level_name)
+			) {
 				level_str = TempLogger.LEVEL_TO_STR[level]
 			}
-		
-			TempLogger.CONSOLE_METHOD[console_method_key](
-				`${ts} ${this.caller_tag}${level_str}: ${data}`
-			)
+			
+			let prefix = ts + this.caller_tag + level_str
+			if (prefix.length > 0) {
+				prefix += ': '
+			}
+			
+			TempLogger.CONSOLE_METHOD[console_method_key](prefix + data)
 		}
 	}
 	
@@ -151,6 +171,43 @@ class TempLogger {
 		TempLogger.root = new TempLogger(constructor_opts)
 		return TempLogger.root
 	}
+	
+	static set_level(level) {
+		if (typeof level == 'string') {
+			level = TempLogger.STR_TO_LEVEL[level.toUpperCase()]
+		}
+		if (level == undefined) {
+			level = TempLogger.LEVEL_DEBUG
+		}
+		
+		TempLogger.root.level = level
+	}
+	
+	static set_with_timestamp(with_timestamp) {
+		TempLogger.root.with_timestamp = with_timestamp == true
+	}
+	
+	static set_caller_name(caller_name) {
+		TempLogger.root.caller_tag = (caller_name == undefined || caller_name == '')
+			? ''
+			: caller_name + '.'
+	}
+	
+	static set_with_lineno(with_lineno) {
+		TempLogger.root.with_lineno = with_lineno == true
+	}
+	
+	static set_parse_level_prefix(parse_level_prefix) {
+		TempLogger.root.parse_level_prefix = parse_level_prefix == true
+	}
+	
+	static set_with_level(with_level) {
+		TempLogger.root.with_level = with_level == true
+	}
+	
+	static set_with_always_level_name(with_always_level_name) {
+		TempLogger.root.with_always_level_name = with_always_level_name == true
+	}
 }
 
 // "scoped" class variables
@@ -172,12 +229,15 @@ TempLogger.LEVEL_INFO = 1
 TempLogger.LEVEL_WARNING = 2
 TempLogger.LEVEL_ERROR = 3
 TempLogger.LEVEL_CRITICAL = 4
+TempLogger.LEVEL_ALWAYS = 10
 
 TempLogger.STR_DEBUG = 'DEBUG'
 TempLogger.STR_INFO = 'INFO'
 TempLogger.STR_WARNING = 'WARNING'
 TempLogger.STR_ERROR = 'ERROR'
 TempLogger.STR_CRITICAL = 'CRITICAL'
+TempLogger.STR_ALWAYS = 'ALWAYS'
+
 TempLogger.STR_WARN = 'WARN'
 TempLogger.STR_ERR = 'ERR'
 
@@ -189,6 +249,7 @@ TempLogger.STR_TO_LEVEL[TempLogger.STR_WARN] = TempLogger.LEVEL_WARNING
 TempLogger.STR_TO_LEVEL[TempLogger.STR_ERROR] = TempLogger.LEVEL_ERROR
 TempLogger.STR_TO_LEVEL[TempLogger.STR_ERR] = TempLogger.LEVEL_ERROR
 TempLogger.STR_TO_LEVEL[TempLogger.STR_CRITICAL] = TempLogger.LEVEL_CRITICAL
+TempLogger.STR_TO_LEVEL[TempLogger.STR_ALWAYS] = TempLogger.LEVEL_ALWAYS
 
 TempLogger.LEVEL_TO_STR = {}
 TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_DEBUG] = TempLogger.STR_DEBUG
@@ -196,6 +257,7 @@ TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_INFO] = TempLogger.STR_INFO
 TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_WARNING] = TempLogger.STR_WARNING
 TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_ERROR] = TempLogger.STR_ERROR
 TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_CRITICAL] = TempLogger.STR_CRITICAL
+TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_ALWAYS] = TempLogger.STR_ALWAYS
 
 TempLogger.root = new TempLogger()
 
@@ -212,7 +274,17 @@ if (typeof exports != 'undefined') {
 	exports.TempLogger = TempLogger
 	exports.root = TempLogger.root
 	
+	// root constructor wrapper
 	exports.config = function(opt) {
 		exports.root = TempLogger.config(opt)
 	}
+	
+	// setters
+	exports.set_level = TempLogger.set_level
+	exports.set_with_timestamp = TempLogger.set_timestamp
+	exports.set_caller_name = TempLogger.set_caller_name
+	exports.set_with_lineno = TempLogger.set_with_lineno
+	exports.set_parse_level_prefix = TempLogger.set_parse_level_prefix
+	exports.set_with_level = TempLogger.set_with_level
+	exports.set_with_always_level_name = TempLogger.set_with_always_level_name
 }
