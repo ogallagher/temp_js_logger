@@ -63,6 +63,11 @@ class TempLogger {
 		this.parse_level_prefix = parse_level_prefix == true
 		this.with_level = with_level == true
 		this.with_always_level_name = with_always_level_name == true
+		
+		// webpage console
+		if (environment == TempLogger.ENV_FRONTEND && !TempLogger.with_webpage_console) {
+			TempLogger.init_webpage_console()
+		}
 	}
 	
 	log(data, console_method_key = 'log') {
@@ -131,10 +136,20 @@ class TempLogger {
 				prefix += ': '
 			}
 			
-			TempLogger.CONSOLE_METHOD[console_method_key](prefix + data)
+			let message = prefix + data
+			TempLogger.CONSOLE_METHOD[console_method_key](message)
 			
-			if (TempLogger.environment == TempLogger.ENV_FRONTEND) {
+			if (
+				TempLogger.environment == TempLogger.ENV_FRONTEND && 
+				TempLogger.with_webpage_console
+			) {
 				// show in gui
+				let msgbox_jq = $(TempLogger.CMP_MESSAGE_DEFAULT)
+				.addClass(`alert-${TempLogger.LEVEL_TO_ALERT_COLOR[level]}`)
+				
+				msgbox_jq.find(`.${TempLogger.CMP_MESSAGE_CLASS}`).html(message)
+				
+				$(`.${TempLogger.CMP_CONSOLE_CLASS}`).append(msgbox_jq)
 			}
 		}
 	}
@@ -212,6 +227,13 @@ class TempLogger {
 	static set_with_always_level_name(with_always_level_name) {
 		TempLogger.root.with_always_level_name = with_always_level_name == true
 	}
+	
+	static init_webpage_console() {
+		let console_jq = $(TempLogger.CMP_CONSOLE_DEFAULT)
+		$('body').prepend(console_jq)
+		
+		TempLogger.with_webpage_console = true
+	}
 }
 
 // "scoped" class variables
@@ -262,6 +284,31 @@ TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_WARNING] = TempLogger.STR_WARNING
 TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_ERROR] = TempLogger.STR_ERROR
 TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_CRITICAL] = TempLogger.STR_CRITICAL
 TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_ALWAYS] = TempLogger.STR_ALWAYS
+
+TempLogger.LEVEL_TO_ALERT_COLOR = {}
+TempLogger.LEVEL_TO_ALERT_COLOR[TempLogger.LEVEL_DEBUG] = 'light'
+TempLogger.LEVEL_TO_ALERT_COLOR[TempLogger.LEVEL_INFO] = 'info'
+TempLogger.LEVEL_TO_ALERT_COLOR[TempLogger.LEVEL_WARNING] = 'warning'
+TempLogger.LEVEL_TO_ALERT_COLOR[TempLogger.LEVEL_ERROR] = 'danger'
+TempLogger.LEVEL_TO_ALERT_COLOR[TempLogger.LEVEL_CRITICAL] = 'danger'
+TempLogger.LEVEL_TO_ALERT_COLOR[TempLogger.LEVEL_ALWAYS] = 'secondary'
+
+TempLogger.with_webpage_console = false
+
+TempLogger.CSS_CLASS_PREFIX = 'temp-logger'
+
+TempLogger.CMP_CONSOLE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-console`
+TempLogger.CMP_CONSOLE_DEFAULT = 
+`<div class="${TempLogger.CMP_CONSOLE_CLASS} fixed-top">
+</div>`
+
+TempLogger.CMP_MESSAGEBOX_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg-box`
+TempLogger.CMP_MESSAGE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg`
+TempLogger.CMP_MESSAGE_DEFAULT = 
+`<div class="${TempLogger.CMP_MESSAGE_CLASS} alert" alert-dismissible" role="alert">
+	<span class="${TempLogger.CMP_MESSAGE_CLASS}"></span>
+	<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+</div>`
 
 TempLogger.root = new TempLogger()
 
