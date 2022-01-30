@@ -305,7 +305,7 @@ TempLogger.CMP_CONSOLE_DEFAULT =
 TempLogger.CMP_MESSAGEBOX_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg-box`
 TempLogger.CMP_MESSAGE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg`
 TempLogger.CMP_MESSAGE_DEFAULT = 
-`<div class="${TempLogger.CMP_MESSAGE_CLASS} alert opacity-25" alert-dismissible" role="alert">
+`<div class="${TempLogger.CMP_MESSAGE_CLASS} alert" alert-dismissible" role="alert">
 	<div class="row">
 		<span class="${TempLogger.CMP_MESSAGE_CLASS} col"></span>
 		<button type="button" class="btn-close col-auto" data-bs-dismiss="alert" aria-label="close"></button>
