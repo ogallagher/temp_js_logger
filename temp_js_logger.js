@@ -77,14 +77,9 @@ class TempLogger {
 		
 		// webpage console
 		if (TempLogger.environment == TempLogger.ENV_FRONTEND && !TempLogger.with_webpage_console) {
-			let window_load_chain = window.onload
-			window.onload = () => {
-				if (window_load_chain != undefined) {
-					window_load_chain()
-				}
-				
+			window.addEventListener('load', function(e) {
 				TempLogger.init_webpage_console()
-			}
+			})
 		}
 	}
 	
