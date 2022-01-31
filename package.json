@@ -4,7 +4,8 @@
   "description": "Temporary backend/frontend logging library that patches console.",
   "main": "temp_js_logger.js",
   "scripts": {
-    "test": "cli_driver.js"
+    "test-cli": "node test/temp_js_logger_cli.js",
+    "test-gui": "node test/temp_js_logger_webserver.js"
   },
   "repository": {
     "type": "git",
@@ -24,5 +25,9 @@
   "bugs": {
     "url": "https://github.com/ogallagher/temp_js_logger/issues"
   },
-  "homepage": "https://github.com/ogallagher/temp_js_logger#readme"
+  "homepage": "https://github.com/ogallagher/temp_js_logger#readme",
+  "devDependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1"
+  }
 }

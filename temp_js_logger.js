@@ -77,7 +77,14 @@ class TempLogger {
 		
 		// webpage console
 		if (TempLogger.environment == TempLogger.ENV_FRONTEND && !TempLogger.with_webpage_console) {
-			TempLogger.init_webpage_console()
+			let window_load_chain = window.onload
+			window.onload = () => {
+				if (window_load_chain != undefined) {
+					window_load_chain()
+				}
+				
+				TempLogger.init_webpage_console()
+			}
 		}
 	}
 	
@@ -160,17 +167,18 @@ class TempLogger {
 			TempLogger.with_webpage_console
 		) {
 			// show in gui
-			let msgbox_jq = $(TempLogger.CMP_MESSAGE_DEFAULT)
-			.addClass(`alert-${TempLogger.LEVEL_TO_ALERT_COLOR[level]}`)
+			let msgbox_el = TempLogger.html_to_element(TempLogger.CMP_MESSAGE_DEFAULT)
 			
-			msgbox_jq.find(`.${TempLogger.CMP_MESSAGE_CLASS}`).html(data)
+			msgbox_el.classList.add(`alert-${TempLogger.LEVEL_TO_ALERT_COLOR[level]}`)
 			
-			$(`.${TempLogger.CMP_CONSOLE_CLASS}`).append(msgbox_jq)
+			let msg_el = msgbox_el.getElementsByClassName(TempLogger.CMP_MESSAGE_CLASS)[0]
+			msg_el.innerHTML = data
+			
+			document.getElementsByClassName(TempLogger.CMP_CONSOLE_CLASS)[0]
+			.appendChild(msgbox_el)
 		}
 	}
 	
-	// TODO modify for current nesting
-	// TODO handle cases where line is undefined
 	static get_caller_line() {
 		try {
 			throw new Error('')
@@ -182,7 +190,7 @@ class TempLogger {
 				let call_stack = err.stack.split('\n')
 				let caller_info = call_stack[4]
 				
-				if (caller_info.indexOf(':') == -1) {
+				if (caller_info == undefined || caller_info.indexOf(':') == -1) {
 					caller_info = call_stack[3]
 				}
 			
@@ -192,7 +200,7 @@ class TempLogger {
 				line = caller_info[caller_info.length-2]
 			}
 			catch (e) {
-				console.log(call_stack)
+				TempLogger.CONSOLE_METHOD['error'](call_stack)
 				throw e
 			}
 			finally {
@@ -255,16 +263,26 @@ class TempLogger {
 	}
 	
 	static init_webpage_console() {
-		let console_jq = $(TempLogger.CMP_CONSOLE_DEFAULT)
-		$('body').append(console_jq)
+		let console_el = TempLogger.html_to_element(TempLogger.CMP_CONSOLE_DEFAULT)
+		document.getElementsByTagName('body')[0].appendChild(console_el)
 		
 		TempLogger.with_webpage_console = true
+		
+		TempLogger.CONSOLE_METHOD['log']('initialized webpage console')
 	}
 	
 	static remove_webpage_console() {
 		TempLogger.with_webpage_console = false
 		
 		$(`.${TempLogger.CMP_CONSOLE_CLASS}`).remove()
+	}
+	
+	// https://stackoverflow.com/a/35385518/10200417
+	static html_to_element(html) {
+	    let template = document.createElement('template')
+	    html = html.trim()	// never return a text node of whitespace as the result
+	    template.innerHTML = html
+	    return template.content.firstChild
 	}
 }
 
@@ -331,7 +349,7 @@ TempLogger.CSS_CLASS_PREFIX = 'temp-logger'
 
 TempLogger.CMP_CONSOLE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-console`
 TempLogger.CMP_CONSOLE_DEFAULT = 
-`<div class="${TempLogger.CMP_CONSOLE_CLASS} fixed-top px-4">
+`<div class="${TempLogger.CMP_CONSOLE_CLASS} fixed-top px-4 text-start">
 </div>`
 
 TempLogger.CMP_MESSAGEBOX_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg-box`
@@ -339,7 +357,7 @@ TempLogger.CMP_MESSAGE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg`
 TempLogger.CMP_MESSAGE_DEFAULT = 
 `<div class="${TempLogger.CMP_MESSAGE_CLASS} alert alert-dismissible my-2" role="alert">
 	<div class="row">
-		<span class="${TempLogger.CMP_MESSAGE_CLASS} col"></span>
+		<div class="${TempLogger.CMP_MESSAGE_CLASS} col"></div>
 		<button type="button" class="btn-close col-auto" data-bs-dismiss="alert" aria-label="close"></button>
 	</div>
 </div>`
