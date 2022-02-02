@@ -19,14 +19,18 @@ If you want message metadata, you have to include that yourself. And you don't c
 ```javascript
 const temp_logger = require('./temp_js_logger')
 
-console.log('DEBUG oh, that was easy')
+temp_logger.import_promise
+.then(() => {
+	# I'm only nesting in promise resolve so optional imports (chalk for message coloring) are guaranteed ready
+	console.log('DEBUG oh, that was easy')
 
-console.log('warn but can I configure the level?')
+	console.log('warn but can I configure the level?')
 
-temp_logger.set_level('info')
+	temp_logger.set_level('info')
 
-console.log('info of course!')
-console.log('debug ignored')
+	console.log('info of course!')
+	console.log('debug ignored')
+})
 ```
 
 ## Configuration options
@@ -57,6 +61,10 @@ Whether to include the level string/label in the output message.
 ### `with_always_level_name`
 Whether to include the `ALWAYS` level string in messages determined to be at this level, which
 is the default for any message that doesn't indicate the level and has `parse_level_prefix` set to `true`.
+
+### `with_cli_colors`
+Whether to color the cli messages by level. Note this uses the optional [**chalk**](https://github.com/chalk/chalk) dependency,
+the import of which isn't ready until `temp_logger.imports_promise` resolves.
 
 ## Implementation details
 

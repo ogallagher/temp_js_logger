@@ -5,6 +5,8 @@
  * Written in common js, so no import/export keywords.
  */
 
+// class
+
 class TempLogger {
 	/**
 	 * Create new TempLogger instance. All args are specified as keys in an options object.
@@ -29,6 +31,8 @@ class TempLogger {
 	 *
 	 * @param {boolean} with_always_level_name Include ALWAYS as a level name in message if
 	 * no level is specified.
+	 *
+	 * @param {boolean} with_cli_colors Color messages by level in cli.
 	 */
 	constructor(
 		{
@@ -40,6 +44,7 @@ class TempLogger {
 			parse_level_prefix,
 			with_level,
 			with_always_level_name, 
+			with_cli_colors
 		} = {
 			level: TempLogger.STR_DEBUG,
 			level_gui: TempLogger.STR_INFO,
@@ -48,7 +53,8 @@ class TempLogger {
 			with_lineno: true,
 			parse_level_prefix: true,
 			with_level: true,
-			with_always_level_name: false
+			with_always_level_name: false,
+			with_cli_colors: true
 		}
 	) {
 		if (level == undefined) {
@@ -89,6 +95,8 @@ class TempLogger {
 		this.parse_level_prefix = parse_level_prefix == true
 		this.with_level = with_level == true
 		this.with_always_level_name = with_always_level_name == true
+		
+		this.with_cli_colors = with_cli_colors == true
 		
 		// webpage console
 		if (TempLogger.environment == TempLogger.ENV_FRONTEND && !TempLogger.with_webpage_console) {
@@ -169,8 +177,15 @@ class TempLogger {
 			// pick final console method
 			console_method_key = TempLogger.LEVEL_TO_CONSOLE_METHOD[level]
 			
+			let message = prefix + data
+			
+			// style
+			if (this.with_cli_colors && TempLogger.chalk) {
+				message = TempLogger.LEVEL_TO_CLI_COLOR[level](message)
+			}
+			
 			// show in console
-			TempLogger.CONSOLE_METHOD[console_method_key](prefix + data)
+			TempLogger.CONSOLE_METHOD[console_method_key](message)
 		}
 		
 		// determine whether to show the gui message
@@ -224,7 +239,10 @@ class TempLogger {
 	
 	static config(constructor_opts) {
 		TempLogger.root = new TempLogger(constructor_opts)
-		return TempLogger.root
+		
+		return TempLogger.imports_promise.then(() => {
+			return TempLogger.root
+		})
 	}
 	
 	static set_level(level) {
@@ -315,7 +333,36 @@ class TempLogger {
 	}
 }
 
-// "scoped" class variables
+// optional imports
+
+TempLogger.chalk = undefined
+
+TempLogger.imports_promise = 
+import('chalk')
+.then((chalk) => {
+	// console message coloring
+	chalk = chalk.default
+	
+	TempLogger.chalk = chalk
+	TempLogger.LEVEL_TO_CLI_COLOR = {}
+	
+	TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_DEBUG] = (str) => str
+	
+	TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_INFO] = chalk.green
+	
+	TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_WARNING] = chalk.yellow
+	
+	TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_ERROR] = chalk.red
+	
+	TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_CRITICAL] = chalk.magenta
+	
+	TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_ALWAYS] = chalk.inverse
+})
+.catch((err) => {
+	// coloring not available
+})
+
+// scoped class variables
 
 TempLogger.ENV_UNKNOWN = 'unknown'
 TempLogger.ENV_BACKEND = 'backend'
@@ -407,8 +454,8 @@ for (let method_key of Object.keys(TempLogger.CONSOLE_METHOD)) {
 	}
 }
 
-// backend nodejs exports
 if (typeof exports != 'undefined') {
+	// backend nodejs exports
 	// environment
 	TempLogger.environment = TempLogger.ENV_BACKEND
 	
@@ -423,7 +470,9 @@ if (typeof exports != 'undefined') {
 	
 	// root constructor wrapper
 	exports.config = function(opt) {
-		exports.root = TempLogger.config(opt)
+		TempLogger.config(opt).then((root) => {
+			exports.root = root
+		})
 	}
 	
 	// setters
@@ -442,10 +491,14 @@ if (typeof exports != 'undefined') {
 	exports.get_level_gui = TempLogger.get_level_gui
 	exports.get_level_str = TempLogger.get_level_str
 	
+	// imports promise
+	exports.imports_promise = TempLogger.imports_promise
+	
 	// default config
 	exports.config()
 }
 else {
+	// frontend browser
 	// environment
 	TempLogger.environment = TempLogger.ENV_FRONTEND
 	
