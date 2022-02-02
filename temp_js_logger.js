@@ -34,10 +34,10 @@ class TempLogger {
 		{
 			level,
 			level_gui,
-			with_timestamp, 
-			caller_name, 
-			with_lineno, 
-			parse_level_prefix, 
+			with_timestamp,
+			caller_name,
+			with_lineno,
+			parse_level_prefix,
 			with_level,
 			with_always_level_name, 
 		} = {
@@ -51,12 +51,27 @@ class TempLogger {
 			with_always_level_name: false
 		}
 	) {
-		this.level = TempLogger.STR_TO_LEVEL[level.toUpperCase()]
+		if (level == undefined) {
+			level = TempLogger.STR_DEBUG
+		}
+		if (typeof level === 'number') {
+			this.level = level
+		}
+		else {
+			this.level = TempLogger.STR_TO_LEVEL[level.toUpperCase()]
+		}
 		
 		if (level_gui == undefined) {
 			level_gui = TempLogger.STR_INFO
 		}
-		this.level_gui = TempLogger.STR_TO_LEVEL[level_gui.toUpperCase()]
+		if (typeof level_gui === 'number') {
+			// level provided directly
+			this.level_gui = level_gui
+		}
+		else {
+			// level provided as string
+			this.level_gui = TempLogger.STR_TO_LEVEL[level_gui.toUpperCase()]
+		}
 		
 		// force truthy values to boolean
 		this.with_timestamp = with_timestamp == true
@@ -220,6 +235,14 @@ class TempLogger {
 		TempLogger.root.level = level
 	}
 	
+	static get_level() {
+		return TempLogger.root.level
+	}
+	
+	static get_level_str() {
+		return TempLogger.LEVEL_TO_STR[TempLogger.get_level()]
+	}
+	
 	static set_level_gui(level_gui) {
 		if (typeof level_gui == 'string') {
 			level_gui = TempLogger.STR_TO_LEVEL[level_gui.toUpperCase()]
@@ -229,6 +252,14 @@ class TempLogger {
 		}
 		
 		TempLogger.root.level_gui = level_gui
+	}
+	
+	static get_level_gui() {
+		return TempLogger.root.level_gui
+	}
+	
+	static get_level_str() {
+		return TempLogger.LEVEL_TO_STR[TempLogger.get_level_gui()]
 	}
 	
 	static set_with_timestamp(with_timestamp) {
@@ -393,6 +424,12 @@ if (typeof exports != 'undefined') {
 	exports.set_parse_level_prefix = TempLogger.set_parse_level_prefix
 	exports.set_with_level = TempLogger.set_with_level
 	exports.set_with_always_level_name = TempLogger.set_with_always_level_name
+	
+	// getters
+	exports.get_level = TempLogger.get_level
+	exports.get_level_str = TempLogger.get_level_str
+	exports.get_level_gui = TempLogger.get_level_gui
+	exports.get_level_str = TempLogger.get_level_str
 	
 	// default config
 	exports.config()
