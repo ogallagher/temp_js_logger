@@ -2,6 +2,8 @@
 
 Patch and enhance `console` logging methods.
 
+![cli colors screenshot](docs/img/cli_colors.png)
+
 ## Sound familiar?
 
 The default scheme for logging in JS is to use the `console` object. If you're not using to a more complete logging library, the default solution is pretty limited. Basically:
