@@ -1,5 +1,8 @@
 #!node
 
+// Owen Gallagher <github.com/ogallagher>
+// temp_js_logger cli test driver
+
 console.log('this is what program messages looked like before using temp_js_logger')
 console.log('critical but check out what happens when I use it!\n')
 
@@ -12,7 +15,7 @@ console.log('warn but can I configure the level?')
 
 temp_logger.set_level('info')
 
-console.log('info of course!')
+console.log(`info of course! level is ${temp_logger.get_level_str()}`)
 console.log('debug ignored')
 
 console.log('in case you missed it, there was a debug message that I just suppressed')

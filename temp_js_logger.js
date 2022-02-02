@@ -98,7 +98,7 @@ class TempLogger {
 		}
 	}
 	
-	log(data, console_method_key = 'log') {
+	log(data, console_method_key) {
 		let ts = ''
 		if (this.with_timestamp) {
 			ts = new Date().toISOString() + ' '
@@ -165,6 +165,9 @@ class TempLogger {
 			if (prefix.length > 0) {
 				prefix += ': '
 			}
+			
+			// pick final console method
+			console_method_key = TempLogger.LEVEL_TO_CONSOLE_METHOD[level]
 			
 			// show in console
 			TempLogger.CONSOLE_METHOD[console_method_key](prefix + data)
@@ -360,6 +363,14 @@ TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_WARNING] = TempLogger.STR_WARNING
 TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_ERROR] = TempLogger.STR_ERROR
 TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_CRITICAL] = TempLogger.STR_CRITICAL
 TempLogger.LEVEL_TO_STR[TempLogger.LEVEL_ALWAYS] = TempLogger.STR_ALWAYS
+
+TempLogger.LEVEL_TO_CONSOLE_METHOD = {}
+TempLogger.LEVEL_TO_CONSOLE_METHOD[TempLogger.LEVEL_DEBUG] = 'log'
+TempLogger.LEVEL_TO_CONSOLE_METHOD[TempLogger.LEVEL_INFO] = 'info'
+TempLogger.LEVEL_TO_CONSOLE_METHOD[TempLogger.LEVEL_WARNING] = 'warn'
+TempLogger.LEVEL_TO_CONSOLE_METHOD[TempLogger.LEVEL_ERROR] = 'error'
+TempLogger.LEVEL_TO_CONSOLE_METHOD[TempLogger.LEVEL_CRITICAL] = 'error'
+TempLogger.LEVEL_TO_CONSOLE_METHOD[TempLogger.LEVEL_ALWAYS] = 'log'
 
 TempLogger.LEVEL_TO_ALERT_COLOR = {}
 TempLogger.LEVEL_TO_ALERT_COLOR[TempLogger.LEVEL_DEBUG] = 'light'
