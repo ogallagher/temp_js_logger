@@ -4,6 +4,8 @@ Patch and enhance `console` logging methods.
 
 ![cli colors screenshot](docs/img/cli_colors.png)
 
+![webpage screenshot](docs/img/webpage.png)
+
 ## Sound familiar?
 
 The default scheme for logging in JS is to use the `console` object. If you're not using to a more complete logging library, the default solution is pretty limited. Basically:
@@ -34,6 +36,10 @@ temp_logger.import_promise
 	console.log('debug ignored')
 })
 ```
+
+## Works for frontend and backend
+
+When in a backend (nodejs) environment, log messages are printed to the cli. When in a frontend (browser) environment, they are printed to the browser debugging console, as well as in the webpage gui!
 
 ## Configuration options
 

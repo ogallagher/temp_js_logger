@@ -194,17 +194,26 @@ class TempLogger {
 			(level >= this.level_gui && level != TempLogger.LEVEL_ALWAYS) &&
 			TempLogger.with_webpage_console
 		) {
-			// show in gui
-			let msgbox_el = TempLogger.html_to_element(TempLogger.CMP_MESSAGE_DEFAULT)
-			
-			msgbox_el.classList.add(`alert-${TempLogger.LEVEL_TO_ALERT_COLOR[level]}`)
-			
-			let msg_el = msgbox_el.getElementsByClassName(TempLogger.CMP_MESSAGE_CLASS)[0]
-			msg_el.innerHTML = data
-			
-			document.getElementsByClassName(TempLogger.CMP_CONSOLE_CLASS)[0]
-			.appendChild(msgbox_el)
+			this.log_gui(data, level)
 		}
+	}
+	
+	log_gui(data, level) {
+		// parse html template
+		let msgbox_el = TempLogger.html_to_element(TempLogger.CMP_MESSAGE_DEFAULT)
+		
+		msgbox_el.classList.add(`alert-${TempLogger.LEVEL_TO_ALERT_COLOR[level]}`)
+		
+		let msg_el = msgbox_el.getElementsByClassName(TempLogger.CMP_MESSAGE_CLASS)[0]
+		msg_el.innerHTML = data
+		
+		let close_btn = msgbox_el.getElementsByClassName(TempLogger.CMP_CLOSE_CLASS)[0]
+		close_btn.onclick = function(e) {
+			msgbox_el.remove()
+		}
+		
+		document.getElementsByClassName(TempLogger.CMP_CONSOLE_CLASS)[0]
+		.appendChild(msgbox_el)
 	}
 	
 	static get_caller_line() {
@@ -438,11 +447,15 @@ TempLogger.CMP_CONSOLE_DEFAULT =
 
 TempLogger.CMP_MESSAGEBOX_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg-box`
 TempLogger.CMP_MESSAGE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg`
+TempLogger.CMP_CLOSE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-close`
 TempLogger.CMP_MESSAGE_DEFAULT = 
 `<div class="${TempLogger.CMP_MESSAGE_CLASS} alert alert-dismissible my-2" role="alert">
 	<div class="row">
 		<div class="${TempLogger.CMP_MESSAGE_CLASS} col"></div>
-		<button type="button" class="btn-close col-auto" data-bs-dismiss="alert" aria-label="close"></button>
+		<button 
+			type="button" aria-label="close"
+			class="${TempLogger.CMP_CLOSE_CLASS} btn-close col-auto">
+		</button>
 	</div>
 </div>`
 
@@ -470,7 +483,7 @@ if (typeof exports != 'undefined') {
 	
 	// root constructor wrapper
 	exports.config = function(opt) {
-		TempLogger.config(opt).then((root) => {
+		return TempLogger.config(opt).then((root) => {
 			exports.root = root
 		})
 	}

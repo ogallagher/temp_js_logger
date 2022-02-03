@@ -27,40 +27,44 @@ Promise.all([
 		with_lineno: true,
 		parse_level_prefix: true,
 		with_level: true,
-		with_always_level_name: false
+		with_always_level_name: false,
+		with_cli_colors: true
 	})
-	console.log(`info configured temp_logger.root:\n${
-		JSON.stringify(temp_logger.root, null, 2)
-	}`)
+	// nest subsequent logging commands to wait for colors
+	.then(() => {
+		console.log(`info configured temp_logger.root:\n${
+			JSON.stringify(temp_logger.root, null, 2)
+		}`)
+		
+		// serve public dir
+		let PUBLIC_DIR = `${__dirname}/public`
+		console.log(`DEBUG serving ${PUBLIC_DIR}/`)
 	
-	// serve public dir
-	let PUBLIC_DIR = `${__dirname}/public`
-	console.log(`DEBUG serving ${PUBLIC_DIR}/`)
+		// server instance
+		const server = express()
 	
-	// server instance
-	const server = express()
+		// enable cross-origin requests for same origin html imports
+		server.use(cors({
+			// allow all origins
+			origin: '*'
+		}))
 	
-	// enable cross-origin requests for same origin html imports
-	server.use(cors({
-		// allow all origins
-		origin: '*'
-	}))
+		server.set('port', process.env.PORT || 80)
 	
-	server.set('port', process.env.PORT || 80)
+		// serve website from public/
+		server.use(express.static(PUBLIC_DIR))
 	
-	// serve website from public/
-	server.use(express.static(PUBLIC_DIR))
-	
-	// route root path to main page
-	server.get('/', function(req,res,next) {
-		console.log(`INFO routing root path to /temp_js_logger.html`)
-		res.sendFile(`./temp_js_logger.html`, {
-			root: PUBLIC_DIR
+		// route root path to main page
+		server.get('/', function(req,res,next) {
+			console.log(`INFO routing root path to /temp_js_logger.html`)
+			res.sendFile(`./temp_js_logger.html`, {
+				root: PUBLIC_DIR
+			})
 		})
-	})
 	
-	// http server
-	server.listen(server.get('port'), on_start)
+		// http server
+		server.listen(server.get('port'), on_start)
+	})
 	
 	// methods
 	

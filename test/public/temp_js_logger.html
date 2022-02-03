@@ -15,13 +15,6 @@
 			integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" 
 			crossorigin="anonymous"/>
 		
-		<!-- TODO remove bootstrap js -->
-		<script 
-			src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" 
-			integrity="sha256-cMPWkL3FzjuaFSfEYESYmjF25hCIL6mfRSPnW8OVvM4=" 
-			crossorigin="anonymous">
-		</script>
-		
 		<!-- 
 			temp js logger
 		-->
@@ -36,12 +29,7 @@
 		<script type="text/javascript">
 			console.log('message without level str, written prior to logger configuration')
 			
-			let window_load_chain = window.onload
-			window.onload = function() {
-				if (window_load_chain != undefined) {
-					window_load_chain()
-				}
-				
+			window.addEventListener('load', function() {
 				// configure logging
 				TempLogger.config({
 					level: 'debug',
@@ -86,7 +74,7 @@
 						})
 					}
 				}
-			}
+			})
 			
 			function level_button_on_click(event) {
 				let self = event.target
