@@ -131,10 +131,10 @@ class TempLogger {
 					if (parsed_level != undefined) {
 						// update level
 						level = parsed_level
+						
+						// remove level str from message
+						data = data.substring(m.index + m[0].length)
 					}
-					
-					// remove level str from message
-					data = data.substring(m.index + m[0].length)
 				}
 			}
 		}
