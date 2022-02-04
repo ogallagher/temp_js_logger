@@ -1,6 +1,9 @@
 # nodejs
 node_modules
 
+# jsdoc
+out
+
 # etc
 local
-
+npm_env.sh

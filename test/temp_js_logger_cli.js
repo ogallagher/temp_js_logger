@@ -46,4 +46,11 @@ temp_logger.imports_promise.then(() => {
 	console.warn('see readme.md or documentation in the source for explanation of these options')
 
 	console.error('DO NOT PANIC. Everything is fine!')
+	
+	console.warn('enabling parse_level_prefix and with_always_level_name')
+	
+	temp_logger.set_parse_level_prefix(true)
+	temp_logger.set_with_always_level_name(true)
+	
+	console.log('this is an always-level message, since it has no prefix specified')
 })

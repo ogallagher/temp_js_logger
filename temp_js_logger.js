@@ -82,12 +82,9 @@ class TempLogger {
 		// force truthy values to boolean
 		this.with_timestamp = with_timestamp == true
 		
-		this.caller_tag = caller_name
-		if (caller_name == undefined || caller_name == '') {
-			this.caller_tag = ''
-		}
-		else {
-			this.caller_tag += '.'
+		this.caller_name = caller_name
+		if (caller_name == '') {
+			this.caller_name = undefined
 		}
 		
 		this.with_lineno = with_lineno == true
@@ -109,12 +106,15 @@ class TempLogger {
 	log(data, console_method_key) {
 		let ts = ''
 		if (this.with_timestamp) {
-			ts = new Date().toISOString() + ' '
+			ts = new Date().toISOString()
 		}
 		
-		let lineno = ''
+		let metadata = []
+		
+		let lineno
 		if (this.with_lineno) {
-			lineno = TempLogger.get_caller_line() + '.'
+			lineno = TempLogger.get_caller_line()
+			metadata.push(lineno)
 		}
 		
 		let level = TempLogger.LEVEL_ALWAYS
@@ -159,18 +159,22 @@ class TempLogger {
 			}
 		}
 		
-		let level_str = ''
+		let level_str = TempLogger.LEVEL_TO_STR[level]
 		if (
 			this.with_level && 
 			(level != TempLogger.LEVEL_ALWAYS || this.with_always_level_name)
 		) {
-			level_str = TempLogger.LEVEL_TO_STR[level]
+			metadata.push(level_str)
 		}
 		
 		// determine whether to show the console message
 		if (level >= this.level) {
-			let prefix = ts + this.caller_tag + lineno + level_str
-			if (prefix.length > 0) {
+			if (ts.length !== 0) {
+				ts += ' '
+			}
+			
+			let prefix = ts + metadata.join('.')
+			if (prefix.length !== 0) {
 				prefix += ': '
 			}
 			
@@ -297,7 +301,7 @@ class TempLogger {
 	}
 	
 	static set_caller_name(caller_name) {
-		TempLogger.root.caller_tag = (caller_name == undefined || caller_name == '')
+		TempLogger.root.caller_name = (caller_name == undefined || caller_name == '')
 			? ''
 			: caller_name + '.'
 	}
