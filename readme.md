@@ -25,7 +25,7 @@ const temp_logger = require('./temp_js_logger')
 
 temp_logger.import_promise
 .then(() => {
-	# I'm only nesting in promise resolve so optional imports (chalk for message coloring) are guaranteed ready
+	// I'm only nesting in promise resolve so optional imports (chalk for message coloring) are guaranteed ready
 	console.log('DEBUG oh, that was easy')
 
 	console.log('warn but can I configure the level?')
