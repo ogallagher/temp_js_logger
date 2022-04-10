@@ -6,6 +6,14 @@ Patch and enhance `console` logging methods.
 
 ![webpage screenshot](docs/img/webpage.png)
 
+## Install
+
+Available for download at [npmjs/package/temp_js_logger](https://www.npmjs.com/package/temp_js_logger).
+
+```sh
+npm install temp_js_logger
+```
+
 ## Sound familiar?
 
 The default scheme for logging in JS is to use the `console` object. If you're not using to a more complete logging library, the default solution is pretty limited. Basically:
