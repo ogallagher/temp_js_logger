@@ -1,6 +1,6 @@
 {
   "name": "temp_js_logger",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "description": "Temporary backend/frontend logging library that patches console.",
   "main": "temp_js_logger.js",
   "scripts": {
