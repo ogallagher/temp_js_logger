@@ -9,7 +9,7 @@
 
 class TempLogger {
 	/**
-	 * Create new TempLogger instance. All args are specified as keys in an options object.
+	 * Create new TempLogger instance. Note almost all args are specified as keys in an options object.
 	 *
 	 * By default, all message metadata is hidden for gui (webpage) messages.
 	 *
@@ -19,7 +19,7 @@ class TempLogger {
 	 * 
 	 * @param {boolean} with_timestamp Include timestamp in message.
 	 * 
-	 * @param {String} caller_name Include given caller name in message.
+	 * @param {String} name Logger name.
 	 * 
 	 * @param {boolean} with_lineno Include caller line number in message.
 	 * 
@@ -29,71 +29,98 @@ class TempLogger {
 	 * 
 	 * @param {boolean} with_level Include level name in message.
 	 *
-	 * @param {boolean} with_always_level_name Include ALWAYS as a level name in message if
+	 * @param {boolean} with_always_level_name Include `ALWAYS` as a level name in message if
 	 * no level is specified.
 	 *
 	 * @param {boolean} with_cli_colors Color messages by level in cli.
+	 * 
+	 * @param {paramType} paramName paramDescription
 	 */
 	constructor(
 		{
 			level,
 			level_gui,
 			with_timestamp,
-			caller_name,
+			name,
 			with_lineno,
 			parse_level_prefix,
 			with_level,
 			with_always_level_name, 
 			with_cli_colors
 		} = {
-			level: TempLogger.STR_DEBUG,
-			level_gui: TempLogger.STR_INFO,
-			with_timestamp: false,
-			caller_name: undefined,
-			with_lineno: true,
-			parse_level_prefix: true,
-			with_level: true,
-			with_always_level_name: false,
-			with_cli_colors: true
-		}
+			level: undefined,
+			level_gui: undefined,
+			with_timestamp: undefined,
+			name: undefined,
+			with_lineno: undefined,
+			parse_level_prefix: undefined,
+			with_level: undefined,
+			with_always_level_name: undefined, 
+			with_cli_colors: undefined
+		},
+		replaced
 	) {
-		if (level == undefined) {
-			level = TempLogger.STR_DEBUG
-		}
-		if (typeof level === 'number') {
-			this.level = level
+		if (replaced === undefined) {
+			this.children = new Map()
 		}
 		else {
-			this.level = TempLogger.STR_TO_LEVEL[level.toUpperCase()]
+			// assign children of original logger to this logger
+			this.children = replaced.children
 		}
 		
-		if (level_gui == undefined) {
-			level_gui = TempLogger.STR_INFO
-		}
-		if (typeof level_gui === 'number') {
-			// level provided directly
-			this.level_gui = level_gui
-		}
-		else {
-			// level provided as string
-			this.level_gui = TempLogger.STR_TO_LEVEL[level_gui.toUpperCase()]
-		}
+		// defaults and conversions handled in methods
+		this.set_level(level)
+		this.set_level_gui(level_gui)
 		
-		// force truthy values to boolean
-		this.with_timestamp = with_timestamp == true
+		this.set_with_timestamp(
+			(with_timestamp === undefined)
+			// default
+			? false
+			// force truthy to boolean
+			: with_timestamp == true
+		)
 		
-		this.caller_name = caller_name
-		if (caller_name == '') {
-			this.caller_name = undefined
-		}
+		this.set_name(name)
 		
-		this.with_lineno = with_lineno == true
+		this.set_with_lineno(
+			(with_lineno === undefined) 
+			// default
+			? true 
+			// force truthy to boolean
+			: with_lineno == true
+		)
 		
-		this.parse_level_prefix = parse_level_prefix == true
-		this.with_level = with_level == true
-		this.with_always_level_name = with_always_level_name == true
+		this.set_parse_level_prefix(
+			(parse_level_prefix === undefined) 
+			// default
+			? true 
+			// force truthy to boolean
+			: parse_level_prefix == true
+		)
 		
-		this.with_cli_colors = with_cli_colors == true
+		this.set_with_level(
+			(with_level === undefined) 
+			// default
+			? true 
+			// truthy to boolean
+			: with_level == true
+		)
+		
+		this.set_with_always_level_name(
+			(with_always_level_name === undefined)
+			// default
+			? false 
+			// truthy to boolean
+			: with_always_level_name == true
+		)
+		
+		this.set_with_cli_colors(
+			(with_cli_colors === undefined) 
+			// default
+			? true 
+			// truthy to boolean
+			: with_cli_colors == true
+		)
 		
 		// webpage console
 		if (TempLogger.environment == TempLogger.ENV_FRONTEND && !TempLogger.with_webpage_console) {
@@ -103,6 +130,12 @@ class TempLogger {
 		}
 	}
 	
+	/**
+	 * Log a message to the cli console, and gui if enabled.
+	 * 
+	 * @param {Object} data The data/message to log.
+	 * @param {String} console_method_key Optional console method name to use (usually `log`).
+	 */
 	log(data, console_method_key) {
 		let ts = ''
 		if (this.with_timestamp) {
@@ -110,6 +143,10 @@ class TempLogger {
 		}
 		
 		let metadata = []
+		
+		if (this.name !== undefined) {
+			metadata.push(this.name)
+		}
 		
 		let lineno
 		if (this.with_lineno) {
@@ -220,6 +257,40 @@ class TempLogger {
 		.appendChild(msgbox_el)
 	}
 	
+	/**
+	 * Create child logger of this one, or get an existing one.
+	 * 
+	 * Logger names in the hierarchy use dots as delimiter between parent and child.
+	 * For now, all configuration options are handled at the root level, and descendent logger instances
+	 * do not have their own options.
+	 * 
+	 * @example `TempLogger.root.get_child('banana') // name = <root-name>.banana`
+	 * 
+	 * @param {String} name Child logger name.
+	 */
+	get_child(name) {
+		if (this.children.has(name)) {
+			return this.children.get(name)
+		}
+		else {
+			let child = new TempLogger({
+				level: this.level,
+				level_gui: this.level_gui,
+				with_timestamp: this.with_timestamp,
+				name: name,
+				with_lineno: this.withlineno,
+				parse_level_prefix: this.parse_level_prefix,
+				with_level: this.with_level,
+				with_always_level_name: this.with_always_level_name,
+				with_cli_colors: this.with_cli_colors
+			})
+		
+			this.children.set(name, child)
+		
+			return child
+		}
+	}
+	
 	static get_caller_line() {
 		try {
 			throw new Error('')
@@ -250,78 +321,232 @@ class TempLogger {
 		}
 	}
 	
+	/**
+	 * Configure the root logger.
+	 * 
+	 * All children of the previous root logger will be transferred to this one.
+	 * 
+	 * @param {Object} constructor_opts Options passed to the root logger constructor.
+	 */
 	static config(constructor_opts) {
-		TempLogger.root = new TempLogger(constructor_opts)
+		TempLogger.root = new TempLogger(constructor_opts, TempLogger.root)
 		
 		return TempLogger.imports_promise.then(() => {
 			return TempLogger.root
 		})
 	}
 	
-	static set_level(level) {
+	/**
+	 * Set log level at or above which messages will be displayed.
+	 * 
+	 * @param {(String|Number)} level Level or level name.
+	 */
+	set_level(level) {
 		if (typeof level == 'string') {
+			// convert to level number
 			level = TempLogger.STR_TO_LEVEL[level.toUpperCase()]
 		}
 		if (level == undefined) {
+			// default
 			level = TempLogger.LEVEL_DEBUG
 		}
 		
-		TempLogger.root.level = level
+		this.level = level
+		
+		for (let child of this.children.values()) {
+			child.set_level(this.level)
+		}
 	}
 	
+	/**
+	 * Convenience method for `TempLogger.root.set_level`.
+	 */
+	static set_level(level) {
+		TempLogger.root.set_level(level)
+	}
+	
+	/**
+	 * @returns {Number} Current level.
+	 */
+	get_level() {
+		return this.level
+	}
+	
+	/**
+	 * @returns {Number} Root logger level.
+	 */
 	static get_level() {
-		return TempLogger.root.level
+		return TempLogger.root.get_level()
 	}
 	
+	/**
+	 * @returns {String} Current level name.
+	 */
+	get_level_str() {
+		return TempLogger.LEVEL_TO_STR[this.get_level()]
+	}
+	
+	/**
+	 * @returns {String} Root logger level name.
+	 */
 	static get_level_str() {
-		return TempLogger.LEVEL_TO_STR[TempLogger.get_level()]
+		return TempLogger.root.get_level_str()
 	}
 	
-	static set_level_gui(level_gui) {
+	/**
+	 * Set log level at or above which gui messages will be displayed.
+	 * 
+	 * @param {(String|Number)} level_gui Level or level name.
+	 */
+	set_level_gui(level_gui) {
 		if (typeof level_gui == 'string') {
+			// convert
 			level_gui = TempLogger.STR_TO_LEVEL[level_gui.toUpperCase()]
 		}
 		if (level_gui == undefined) {
+			// default
 			level_gui = TempLogger.LEVEL_INFO
 		}
 		
-		TempLogger.root.level_gui = level_gui
+		this.level_gui = level_gui
+		
+		for (let child of this.children.values()) {
+			child.set_level_gui(this.level_gui)
+		}
 	}
 	
+	/**
+	 * Convenience method for `TempLogger.root.set_level_gui`.
+	 */
+	static set_level_gui(level_gui) {
+		TempLogger.root.set_level_gui(level_gui)
+	}
+	
+	/**
+	 * @returns {Number} Current gui level.
+	 */
+	get_level_gui() {
+		return this.level_gui
+	}
+	
+	/**
+	 * @returns {Number} Root logger gui level.
+	 */
 	static get_level_gui() {
-		return TempLogger.root.level_gui
+		return TempLogger.root.get_level_gui()
 	}
 	
-	static get_level_str() {
-		return TempLogger.LEVEL_TO_STR[TempLogger.get_level_gui()]
+	/**
+	 * @returns {String} Current gui level name.
+	 */
+	get_level_gui_str() {
+		return TempLogger.LEVEL_TO_STR[this.get_level_gui()]
+	}
+	
+	/**
+	 * @returns {Number} Root logger gui level name.
+	 */
+	static get_level_gui_str() {
+		return TempLogger.root.get_level_gui_str()
+	}
+	
+	set_with_timestamp(with_timestamp) {
+		this.with_timestamp = with_timestamp == true
 	}
 	
 	static set_with_timestamp(with_timestamp) {
-		TempLogger.root.with_timestamp = with_timestamp == true
+		TempLogger.root.set_with_timestamp(with_timestamp)
 	}
 	
-	static set_caller_name(caller_name) {
-		TempLogger.root.caller_name = (caller_name == undefined || caller_name == '')
-			? ''
-			: caller_name + '.'
+	/**
+	 * Set the logger name.
+	 * 
+	 * @param {Array} names Qualified logger name, including ancestor logger names in order from
+	 * root to leaf.
+	 */
+	set_name(...names) {
+		let local_name = names[names.length - 1]
+		
+		if (local_name === undefined || local_name == '') {
+			this.local_name = undefined
+			this.name = undefined
+		}
+		else {
+			this.local_name = local_name
+			this.name = names.join('.')
+		}
+		
+		// update inherited names in children
+		for (let child of this.children) {
+			child.set_name(...names.concat([child.local_name]))
+		}
 	}
 	
+	static set_name(name) {
+		TempLogger.root.set_name(name)
+	}
+	
+	/**
+	 * Set whether to show line number.
+	 */
+	set_with_lineno(with_lineno) {
+		this.with_lineno = with_lineno == true
+	}
+	
+	/**
+	 * Convenience method for `TempLogger.root.set_with_lineno`.
+	 */
 	static set_with_lineno(with_lineno) {
-		TempLogger.root.with_lineno = with_lineno == true
+		TempLogger.root.set_with_lineno(with_lineno)
+	}
+	
+	/**
+	 * Set whether to parse log level as a message prefix.
+	 */
+	set_parse_level_prefix(parse_level_prefix) {
+		this.parse_level_prefix = parse_level_prefix == true
 	}
 	
 	static set_parse_level_prefix(parse_level_prefix) {
-		TempLogger.root.parse_level_prefix = parse_level_prefix == true
+		TempLogger.root.set_parse_level_prefix(parse_level_prefix)
+	}
+	
+	/**
+	 * Set whether to show level name in message.
+	 */
+	set_with_level(with_level) {
+		this.with_level = with_level == true
 	}
 	
 	static set_with_level(with_level) {
-		TempLogger.root.with_level = with_level == true
+		TempLogger.root.set_with_level(with_level)
+	}
+	
+	/**
+	 * Set whether to show messages at the `always` level.
+	 */
+ 	set_with_always_level_name(with_always_level_name) {
+		this.with_always_level_name = with_always_level_name == true
 	}
 	
 	static set_with_always_level_name(with_always_level_name) {
-		TempLogger.root.with_always_level_name = with_always_level_name == true
+		TempLogger.root.set_with_always_level_name(with_always_level_name)
 	}
 	
+	/**
+	 * Set whether to display messages in different colors depending on log level in the cli.
+	 */
+	set_with_cli_colors(with_cli_colors) {
+		this.with_cli_colors = with_cli_colors == true
+	}
+	
+	static set_with_cli_colors(with_cli_colors) {
+		TempLogger.root.set_with_cli_colors(with_cli_colors)
+	}
+	
+	/**
+	 * Add gui console element to the current webpage.
+	 */
 	static init_webpage_console() {
 		let console_el = TempLogger.html_to_element(TempLogger.CMP_CONSOLE_DEFAULT)
 		document.getElementsByTagName('body')[0].appendChild(console_el)
@@ -331,13 +556,20 @@ class TempLogger {
 		TempLogger.CONSOLE_METHOD['log']('initialized webpage console')
 	}
 	
+	/**
+	 * Remove gui console element from the current webpage.
+	 */
 	static remove_webpage_console() {
 		TempLogger.with_webpage_console = false
 		
 		$(`.${TempLogger.CMP_CONSOLE_CLASS}`).remove()
 	}
 	
-	// https://stackoverflow.com/a/35385518/10200417
+	/**
+	 * Create an element ready to be injected into the webpage.
+	 * 
+	 * Adapted from [this stackoverflow answer](https://stackoverflow.com/a/35385518/10200417).
+	 */
 	static html_to_element(html) {
 	    let template = document.createElement('template')
 	    html = html.trim()	// never return a text node of whitespace as the result
@@ -496,7 +728,7 @@ if (typeof exports != 'undefined') {
 	exports.set_level = TempLogger.set_level
 	exports.set_level_gui = TempLogger.set_level_gui
 	exports.set_with_timestamp = TempLogger.set_with_timestamp
-	exports.set_caller_name = TempLogger.set_caller_name
+	exports.set_name = TempLogger.set_name
 	exports.set_with_lineno = TempLogger.set_with_lineno
 	exports.set_parse_level_prefix = TempLogger.set_parse_level_prefix
 	exports.set_with_level = TempLogger.set_with_level
@@ -507,6 +739,9 @@ if (typeof exports != 'undefined') {
 	exports.get_level_str = TempLogger.get_level_str
 	exports.get_level_gui = TempLogger.get_level_gui
 	exports.get_level_str = TempLogger.get_level_str
+	
+	// plain console methods. ex: temp_js_logger.CONSOLE_METHOD.log('plain log message')
+	exports.CONSOLE_METHOD = TempLogger.CONSOLE_METHOD
 	
 	// imports promise
 	exports.imports_promise = TempLogger.imports_promise

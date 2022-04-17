@@ -62,8 +62,8 @@ The logging level at or above which a message must be in order to appear in the 
 ### `with_timestamp`
 Whether to include a timestamp in the message.
 
-### `caller_name`
-A name to assign messages to, which will be included in the message.
+### `name`
+A name for the logger, which will be included in the message.
 
 ### `with_lineno`
 Whether to include the source code line number in the message.

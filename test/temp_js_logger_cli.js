@@ -1,14 +1,23 @@
 #!node
 
-// Owen Gallagher <github.com/ogallagher>
-// temp_js_logger cli test driver
+/**
+ * @fileoverview temp_js_logger cli test driver.
+ * 
+ * TODO test logger hierarchy
+ * 
+ * @author <github.com/ogallagher> (Owen Gallagher)
+ */
 
 console.log('this is what program messages looked like before using temp_js_logger')
 console.log('critical but check out what happens when I use it!\n')
 
 const temp_logger = require('../temp_js_logger')
 
-temp_logger.imports_promise.then(() => {
+main()
+
+async function main() {
+	await temp_logger.imports_promise
+	
 	console.log('DEBUG oh, that was easy')
 
 	console.log('warn but can I configure the level?')
@@ -24,7 +33,7 @@ temp_logger.imports_promise.then(() => {
 	let logging_config = {
 		level: 'warning',
 		with_timestamp: true, 
-		caller_name: 'test-cli-driver', 
+		name: 'test-cli-driver', 
 		with_lineno: true, 
 		parse_level_prefix: false, 
 		with_level: true,
@@ -53,4 +62,4 @@ temp_logger.imports_promise.then(() => {
 	temp_logger.set_with_always_level_name(true)
 	
 	console.log('this is an always-level message, since it has no prefix specified')
-})
+}

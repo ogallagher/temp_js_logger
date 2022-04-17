@@ -4,6 +4,7 @@
   "description": "Temporary backend/frontend logging library that patches console.",
   "main": "temp_js_logger.js",
   "scripts": {
+    "test": "node test/temp_js_logger_cli.js",
     "test-cli": "node test/temp_js_logger_cli.js",
     "test-gui": "node test/temp_js_logger_webserver.js"
   },
@@ -20,7 +21,7 @@
     "patch",
     "console"
   ],
-  "author": "Owen Gallagher",
+  "author": "Owen Gallagher (https://github.com/ogallagher)",
   "license": "SEE LICENSE IN license.txt",
   "bugs": {
     "url": "https://github.com/ogallagher/temp_js_logger/issues"
