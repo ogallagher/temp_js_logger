@@ -31,7 +31,7 @@ If you want message metadata, you have to include that yourself. And you don't c
 ```javascript
 const temp_logger = require('./temp_js_logger')
 
-temp_logger.import_promise
+temp_logger.imports_promise
 .then(() => {
 	// I'm only nesting in promise resolve so optional imports (chalk for message coloring) are guaranteed ready
 	console.log('DEBUG oh, that was easy')
