@@ -38,13 +38,14 @@ async function main() {
 		parse_level_prefix: false, 
 		with_level: true,
 		with_always_level_name: true, 
-		with_cli_colors: false
+		with_cli_colors: false,
+		log_to_file: true
 	}
 	console.log(`info now let\'s try an alternate configuration:\n${
 		JSON.stringify(logging_config, null, 2)
 	}`)
-	temp_logger.config(logging_config)
-
+	await temp_logger.config(logging_config)
+	
 	console.log('this is ignored because console.log maps to DEBUG')
 	console.info(`this is ignored because INFO < ${
 		temp_logger.get_level()
@@ -62,4 +63,14 @@ async function main() {
 	temp_logger.set_with_always_level_name(true)
 	
 	console.log('this is an always-level message, since it has no prefix specified')
+	
+	console.log('warning creating child loggers')
+	
+	let artichoke = temp_logger.get_child('artichoke')
+	artichoke.log('critical artichoke logger initialized')
+	let bagel = temp_logger.get_child('bagel')
+	bagel.log('critical bagel logger initialized')
+	
+	artichoke.patch_console()
+	console.log('warn artichoke is now the active logger, used to patch `console.log`')
 }

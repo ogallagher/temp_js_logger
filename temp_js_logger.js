@@ -34,7 +34,12 @@ class TempLogger {
 	 *
 	 * @param {boolean} with_cli_colors Color messages by level in cli.
 	 * 
-	 * @param {paramType} paramName paramDescription
+	 * @param {boolean} log_to_file Whether to output to a log file in a backend environment 
+	 * as well as `process.stdout`.
+	 * 
+	 * @param {TempLogger} parent Reference to parent logger.
+	 * 
+	 * @param {TempLogger} replaced tbd
 	 */
 	constructor(
 		{
@@ -46,7 +51,9 @@ class TempLogger {
 			parse_level_prefix,
 			with_level,
 			with_always_level_name, 
-			with_cli_colors
+			with_cli_colors,
+			log_to_file,
+			parent
 		} = {
 			level: undefined,
 			level_gui: undefined,
@@ -56,7 +63,9 @@ class TempLogger {
 			parse_level_prefix: undefined,
 			with_level: undefined,
 			with_always_level_name: undefined, 
-			with_cli_colors: undefined
+			with_cli_colors: undefined,
+			log_to_file: undefined,
+			parent: undefined
 		},
 		replaced
 	) {
@@ -68,9 +77,14 @@ class TempLogger {
 			this.children = replaced.children
 		}
 		
+		this.parent = parent
+		
 		// defaults and conversions handled in methods
 		this.set_level(level)
+		
 		this.set_level_gui(level_gui)
+		
+		this.level_file = this.level
 		
 		this.set_with_timestamp(
 			(with_timestamp === undefined)
@@ -121,6 +135,19 @@ class TempLogger {
 			// truthy to boolean
 			: with_cli_colors == true
 		)
+		
+		// file logs
+		this.set_log_to_file(
+			(log_to_file === undefined)
+			// default
+			? true
+			// truthy to boolean
+			: log_to_file == true
+		)
+		
+		if (TempLogger.environment == TempLogger.ENV_BACKEND && !TempLogger.with_log_file) {
+			TempLogger.init_log_file()
+		}
 		
 		// webpage console
 		if (TempLogger.environment == TempLogger.ENV_FRONTEND && !TempLogger.with_webpage_console) {
@@ -204,8 +231,9 @@ class TempLogger {
 			metadata.push(level_str)
 		}
 		
-		// determine whether to show the console message
-		if (level >= this.level) {
+		let message
+		
+		if (level >= this.level || level >= this.level_file) {
 			if (ts.length !== 0) {
 				ts += ' '
 			}
@@ -218,15 +246,29 @@ class TempLogger {
 			// pick final console method
 			console_method_key = TempLogger.LEVEL_TO_CONSOLE_METHOD[level]
 			
-			let message = prefix + data
-			
+			message = prefix + data
+		}
+		
+		// determine whether to show the console message
+		// show in console
+		if (level >= this.level) {
 			// style
 			if (this.with_cli_colors && TempLogger.chalk) {
-				message = TempLogger.LEVEL_TO_CLI_COLOR[level](message)
+				TempLogger.CONSOLE_METHOD[console_method_key](
+					TempLogger.LEVEL_TO_CLI_COLOR[level](message)
+				)
 			}
-			
-			// show in console
-			TempLogger.CONSOLE_METHOD[console_method_key](message)
+			else {
+				TempLogger.CONSOLE_METHOD[console_method_key](message)
+			}
+		}
+		
+		// determine whether to log to file
+		if (
+			level >= this.level_file &&
+			(TempLogger.with_log_file && TempLogger.sonic)
+		) {
+			TempLogger.sonic.write(message + '\n')
 		}
 		
 		// determine whether to show the gui message
@@ -274,6 +316,7 @@ class TempLogger {
 		}
 		else {
 			let child = new TempLogger({
+				parent: this,
 				level: this.level,
 				level_gui: this.level_gui,
 				with_timestamp: this.with_timestamp,
@@ -284,11 +327,15 @@ class TempLogger {
 				with_always_level_name: this.with_always_level_name,
 				with_cli_colors: this.with_cli_colors
 			})
-		
+			
 			this.children.set(name, child)
 		
 			return child
 		}
+	}
+	
+	static get_child(name) {
+		return TempLogger.root.get_child(name)
 	}
 	
 	static get_caller_line() {
@@ -330,9 +377,10 @@ class TempLogger {
 	 */
 	static config(constructor_opts) {
 		TempLogger.root = new TempLogger(constructor_opts, TempLogger.root)
+		TempLogger.root.patch_console()
 		
 		return TempLogger.imports_promise.then(() => {
-			return TempLogger.root
+			return Promise.resolve(TempLogger.root)
 		})
 	}
 	
@@ -465,6 +513,11 @@ class TempLogger {
 	 * root to leaf.
 	 */
 	set_name(...names) {
+		if (this.parent !== undefined && names.length == 1) {
+			// inherit ancestor names path
+			names.splice(0, 0, this.parent.name)
+		}
+		
 		let local_name = names[names.length - 1]
 		
 		if (local_name === undefined || local_name == '') {
@@ -478,12 +531,16 @@ class TempLogger {
 		
 		// update inherited names in children
 		for (let child of this.children) {
+			// update all descendant qualified names
 			child.set_name(...names.concat([child.local_name]))
 		}
 	}
 	
-	static set_name(name) {
-		TempLogger.root.set_name(name)
+	/**
+	 * Convenience method for `TempLogger.root.set_name(...names)`.
+	 */
+	static set_name(...names) {
+		TempLogger.root.set_name(...names)
 	}
 	
 	/**
@@ -544,16 +601,71 @@ class TempLogger {
 		TempLogger.root.set_with_cli_colors(with_cli_colors)
 	}
 	
+	set_log_to_file(log_to_file) {
+		this.log_to_file = (log_to_file == true)
+	}
+	
+	static set_log_to_file(log_to_file) {
+		TempLogger.root.set_log_to_file(log_to_file)
+	}
+	
+	/**
+	 * Patch `console` logging methods using this logger.
+	 */
+	patch_console() {
+		let self = this
+		
+		for (let method_key of Object.keys(TempLogger.CONSOLE_METHOD)) {
+			console[method_key] = function(data) {
+				self.log(data, method_key)
+			}
+		}
+	}
+	
+	/**
+	 * Convenience method for `TempLogger.root.patch_console`.
+	 */
+	static patch_console() {
+		TempLogger.root.patch_console()
+	}
+	
+	/**
+	 * Initialize log file.
+	 */
+	static init_log_file() {
+		if (!TempLogger.with_log_file && TempLogger.SonicBoom) {
+			TempLogger.imports_promise = TempLogger.imports_promise.then(() => {
+				TempLogger.sonic = new TempLogger.SonicBoom({
+					dest: TempLogger.LOG_FILE_PATH,
+					append: true,
+					mkdir: true
+				})
+				
+				process.on('exit', function() {
+					TempLogger.sonic.flushSync()
+					TempLogger.sonic.destroy()
+				})
+				
+				TempLogger.with_log_file = true
+				TempLogger.CONSOLE_METHOD['log'](`initialized log file at ${TempLogger.LOG_FILE_PATH}`)
+			})
+		}
+		
+		return TempLogger.imports_promise
+	}
+	
 	/**
 	 * Add gui console element to the current webpage.
 	 */
 	static init_webpage_console() {
-		let console_el = TempLogger.html_to_element(TempLogger.CMP_CONSOLE_DEFAULT)
-		document.getElementsByTagName('body')[0].appendChild(console_el)
+		if (!TempLogger.with_webpage_console) {
+			let console_el = TempLogger.html_to_element(TempLogger.CMP_CONSOLE_DEFAULT)
+			document.getElementsByTagName('body')[0].appendChild(console_el)
 		
-		TempLogger.with_webpage_console = true
+			TempLogger.with_webpage_console = true
 		
-		TempLogger.CONSOLE_METHOD['log']('initialized webpage console')
+			TempLogger.CONSOLE_METHOD['log']('initialized webpage console')
+		}
 	}
 	
 	/**
@@ -581,31 +693,47 @@ class TempLogger {
 // optional imports
 
 TempLogger.chalk = undefined
+TempLogger.SonicBoom = undefined
+TempLogger.sonic = undefined
 
 TempLogger.imports_promise = 
-import('chalk')
-.then((chalk) => {
-	// console message coloring
-	chalk = chalk.default
+Promise.all([
+	import('chalk')
+	.then((chalk) => {
+		// console message coloring
+		chalk = chalk.default
 	
-	TempLogger.chalk = chalk
-	TempLogger.LEVEL_TO_CLI_COLOR = {}
+		TempLogger.chalk = chalk
+		TempLogger.LEVEL_TO_CLI_COLOR = {}
 	
-	TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_DEBUG] = (str) => str
+		TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_DEBUG] = (str) => str
 	
-	TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_INFO] = chalk.green
+		TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_INFO] = chalk.green
 	
-	TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_WARNING] = chalk.yellow
+		TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_WARNING] = chalk.yellow
 	
-	TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_ERROR] = chalk.red
+		TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_ERROR] = chalk.red
 	
-	TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_CRITICAL] = chalk.magenta
+		TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_CRITICAL] = chalk.magenta
 	
-	TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_ALWAYS] = chalk.inverse
-})
-.catch((err) => {
-	// coloring not available
-})
+		TempLogger.LEVEL_TO_CLI_COLOR[TempLogger.LEVEL_ALWAYS] = chalk.inverse
+	})
+	.catch((err) => {
+		// coloring not available
+		TempLogger.CONSOLE_METHOD['log'](`error colored cli logs not available\n${err.stack}`)
+	}),
+	
+	import('sonic-boom')
+	.then((sonic) => {
+		// quick logging to files
+		TempLogger.SonicBoom = sonic.default
+		TempLogger.CONSOLE_METHOD['log'](sonic.default)
+	})
+	.catch((err) => {
+		// file
+		TempLogger.CONSOLE_METHOD['log'](`error file logs not available\n${err.stack}`)
+	})
+])
 
 // scoped class variables
 
@@ -673,6 +801,17 @@ TempLogger.LEVEL_TO_ALERT_COLOR[TempLogger.LEVEL_CRITICAL] = 'danger'
 TempLogger.LEVEL_TO_ALERT_COLOR[TempLogger.LEVEL_ALWAYS] = 'secondary'
 
 TempLogger.with_webpage_console = false
+TempLogger.with_log_file = false
+
+TempLogger.LOG_FILE_DIR = './logs/'
+let now = new Date()
+TempLogger.LOG_FILE_NAME = 
+	'templogger_' + 
+	`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}_` + 
+	`${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}` + 
+	'.log'
+now = undefined
+TempLogger.LOG_FILE_PATH = TempLogger.LOG_FILE_DIR + TempLogger.LOG_FILE_NAME
 
 TempLogger.CSS_CLASS_PREFIX = 'temp-logger'
 
@@ -694,14 +833,6 @@ TempLogger.CMP_MESSAGE_DEFAULT =
 		</button>
 	</div>
 </div>`
-
-// patch console.log
-
-for (let method_key of Object.keys(TempLogger.CONSOLE_METHOD)) {
-	console[method_key] = function(data) {
-		TempLogger.root.log(data, method_key)
-	}
-}
 
 if (typeof exports != 'undefined') {
 	// backend nodejs exports
@@ -739,15 +870,21 @@ if (typeof exports != 'undefined') {
 	exports.get_level_str = TempLogger.get_level_str
 	exports.get_level_gui = TempLogger.get_level_gui
 	exports.get_level_str = TempLogger.get_level_str
+	exports.get_child = TempLogger.get_child
 	
 	// plain console methods. ex: temp_js_logger.CONSOLE_METHOD.log('plain log message')
 	exports.CONSOLE_METHOD = TempLogger.CONSOLE_METHOD
 	
 	// imports promise
 	exports.imports_promise = TempLogger.imports_promise
-	
-	// default config
-	exports.config()
+	.then(() => { 
+		// default config
+		return exports.config()
+	})
+	.then(() => {
+		// patch console logging methods
+		TempLogger.patch_console()
+	})
 }
 else {
 	// frontend browser
@@ -756,4 +893,8 @@ else {
 	
 	// default config
 	TempLogger.config()
+	.then(() => {
+		// patch console logging methods
+		TempLogger.patch_console()
+	})
 }

@@ -4,6 +4,10 @@ node_modules
 # jsdoc
 out
 
+# logs
+logs
+test/logs
+
 # etc
 local
 npm_env.sh

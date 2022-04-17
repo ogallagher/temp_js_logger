@@ -82,6 +82,9 @@ is the default for any message that doesn't indicate the level and has `parse_le
 Whether to color the cli messages by level. Note this uses the optional [**chalk**](https://github.com/chalk/chalk) dependency,
 the import of which isn't ready until `temp_logger.imports_promise` resolves.
 
+### `log_to_file`
+Whether to log to a file, located at `TempLogger.LOG_FILE_PATH`. Note file logging will not be ready until `temp_logger.imports_promise` resolves.
+
 ## Implementation details
 
 This only overrides the target `console` methods: `log` `info` `warn` `error`. Other console methods are unaffected.
