@@ -4,6 +4,10 @@ node_modules
 # jsdoc
 out
 
+# ts
+tsconfig.tsbuildinfo
+*.js.map
+
 # logs
 logs
 test/logs

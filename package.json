@@ -28,9 +28,12 @@
   },
   "homepage": "https://github.com/ogallagher/temp_js_logger#readme",
   "devDependencies": {
+    "@types/jquery": "^3.5.14",
+    "@types/node": "^18.6.4",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "jsdoc": "^3.6.10"
+    "jsdoc": "^3.6.10",
+    "typescript": "^4.7.4"
   },
   "optionalDependencies": {
     "chalk": "^5.0.0",

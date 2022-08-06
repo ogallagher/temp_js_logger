@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "target": "ES6",
+        "allowJs": true,
+        "module": "commonJS",
+        "sourceMap": true,
+        "strict": false,
+        "forceConsistentCasingInFileNames": true,
+        "noEmit": false,
+        "incremental": true
+    },
+    "exclude": [
+        "node_modules"
+    ],
+    "include": [
+        "**/*.ts"
+    ]
+}
