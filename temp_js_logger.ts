@@ -5,10 +5,11 @@
  * Written in common js, so no import/export keywords.
  */
 
-import { ChalkInstance } from 'chalk'
 import SonicBoom from 'sonic-boom'
 
 // typescript types interfaces
+
+declare type ChalkInstance = any
 
 interface TempLoggerConstructorOptions {
 	/**
@@ -125,19 +126,19 @@ class TempLogger {
 
 	static STR_TO_LEVEL: {
 		[key: string]: number
-	}
+	} = {}
 	static LEVEL_TO_STR: {
 		[key: number]: string
-	}
+	} = {}
 	static LEVEL_TO_CLI_COLOR: {
 		[key: number]: ChalkInstance|Function
-	}
+	} = {}
 	static LEVEL_TO_CONSOLE_METHOD: {
 		[key: number]: string
-	}
+	} = {}
 	static LEVEL_TO_ALERT_COLOR: {
 		[key: number]: string
-	}
+	} = {}
 
 	static LOG_FILE_DIR: string = './logs/'
 	static LOG_FILE_NAME: string

@@ -555,6 +555,11 @@ TempLogger.CONSOLE_METHOD = {
     warn: console.warn,
     error: console.error
 };
+TempLogger.STR_TO_LEVEL = {};
+TempLogger.LEVEL_TO_STR = {};
+TempLogger.LEVEL_TO_CLI_COLOR = {};
+TempLogger.LEVEL_TO_CONSOLE_METHOD = {};
+TempLogger.LEVEL_TO_ALERT_COLOR = {};
 TempLogger.LOG_FILE_DIR = './logs/';
 TempLogger.CSS_CLASS_PREFIX = 'temp-logger';
 TempLogger.CMP_CONSOLE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-console`;
@@ -577,7 +582,8 @@ TempLogger.with_webpage_console = false;
 TempLogger.with_log_file = false;
 TempLogger.imports_promise =
     Promise.all([
-        Promise.resolve().then(() => require('chalk')).then((chalk_mod) => {
+        import('chalk')
+            .then((chalk_mod) => {
             // console message coloring
             const chalk = chalk_mod.default;
             TempLogger.chalk = chalk;
@@ -593,7 +599,8 @@ TempLogger.imports_promise =
             // coloring not available
             TempLogger.CONSOLE_METHOD['log'](`error colored cli logs not available\n${err.stack}`);
         }),
-        Promise.resolve().then(() => require('sonic-boom')).then((sonic) => {
+        import('sonic-boom')
+            .then((sonic) => {
             // quick logging to files
             TempLogger.SonicBoom = sonic.default;
             TempLogger.CONSOLE_METHOD['log'](sonic.default);

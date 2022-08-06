@@ -2,7 +2,7 @@
     "compilerOptions": {
         "target": "ES6",
         "allowJs": true,
-        "module": "commonJS",
+        "module": "Node16",
         "sourceMap": true,
         "strict": false,
         "forceConsistentCasingInFileNames": true,
