@@ -39,5 +39,12 @@
   "optionalDependencies": {
     "chalk": "^5.0.0",
     "sonic-boom": "^2.7.0"
-  }
+  },
+  "files": [
+    "test",
+    "temp_js_logger.js",
+    "readme.md",
+    "docs",
+    "license.txt"
+  ]
 }
