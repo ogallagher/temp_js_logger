@@ -1,13 +1,15 @@
 {
     "compilerOptions": {
-        "target": "ES6",
+        "target": "ES2022",
         "allowJs": true,
-        "module": "Node16",
+        "module": "CommonJS",
         "sourceMap": true,
         "strict": false,
         "forceConsistentCasingInFileNames": true,
         "noEmit": false,
-        "incremental": true
+        "incremental": true,
+        "moduleResolution": "node",
+        "esModuleInterop": false
     },
     "exclude": [
         "node_modules"

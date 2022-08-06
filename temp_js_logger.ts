@@ -9,6 +9,7 @@ import SonicBoom from 'sonic-boom'
 
 // typescript types interfaces
 
+declare var exports: any
 declare type ChalkInstance = any
 
 interface TempLoggerConstructorOptions {

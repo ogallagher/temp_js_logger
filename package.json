@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node test/temp_js_logger_cli.js",
     "test-cli": "node test/temp_js_logger_cli.js",
-    "test-gui": "node test/temp_js_logger_webserver.js"
+    "test-gui": "node test/temp_js_logger_webserver.js",
+    "build": "node build/build.js"
   },
   "repository": {
     "type": "git",

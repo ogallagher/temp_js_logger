@@ -5,9 +5,90 @@
  * Temporary JS backend+frontend logger that patches console.log.
  * Written in common js, so no import/export keywords.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+(typeof exports !== "undefined") && Object.defineProperty(exports, "__esModule", { value: true });
 // class
 class TempLogger {
+    /**
+     *
+     */
+    children;
+    /**
+     *
+     */
+    parent;
+    level;
+    level_gui;
+    level_file;
+    name;
+    with_timestamp;
+    with_lineno;
+    parse_level_prefix;
+    with_level;
+    with_always_level_name;
+    with_cli_colors;
+    withlineno;
+    local_name;
+    log_to_file;
+    // optional imports
+    static chalk;
+    static SonicBoom;
+    static sonic;
+    // constants
+    static LEVEL_DEBUG = 0;
+    static LEVEL_INFO = 1;
+    static LEVEL_WARNING = 2;
+    static LEVEL_ERROR = 3;
+    static LEVEL_CRITICAL = 4;
+    static LEVEL_ALWAYS = 10;
+    static STR_DEBUG = 'DEBUG';
+    static STR_INFO = 'INFO';
+    static STR_WARNING = 'WARNING';
+    static STR_WARN = 'WARN';
+    static STR_ERROR = 'ERROR';
+    static STR_ERR = 'ERR';
+    static STR_CRITICAL = 'CRITICAL';
+    static STR_ALWAYS = 'ALWAYS';
+    static ENV_UNKNOWN = 'unknown';
+    static ENV_BACKEND = 'backend';
+    static ENV_FRONTEND = 'frontend';
+    static CONSOLE_METHOD = {
+        log: console.log,
+        info: console.info,
+        warn: console.warn,
+        error: console.error
+    };
+    static STR_TO_LEVEL = {};
+    static LEVEL_TO_STR = {};
+    static LEVEL_TO_CLI_COLOR = {};
+    static LEVEL_TO_CONSOLE_METHOD = {};
+    static LEVEL_TO_ALERT_COLOR = {};
+    static LOG_FILE_DIR = './logs/';
+    static LOG_FILE_NAME;
+    static LOG_FILE_PATH;
+    static CSS_CLASS_PREFIX = 'temp-logger';
+    static CMP_CONSOLE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-console`;
+    static CMP_CONSOLE_DEFAULT = (`<div class="${TempLogger.CMP_CONSOLE_CLASS} fixed-top px-4 text-start">` +
+        `</div>`);
+    static CMP_MESSAGEBOX_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg-box`;
+    static CMP_MESSAGE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg`;
+    static CMP_CLOSE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-close`;
+    static CMP_MESSAGE_DEFAULT = (`<div class="${TempLogger.CMP_MESSAGE_CLASS} alert alert-dismissible my-2" role="alert">
+			<div class="row">
+				<div class="${TempLogger.CMP_MESSAGE_CLASS} col"></div>
+				<button 
+					type="button" aria-label="close"
+					class="${TempLogger.CMP_CLOSE_CLASS} btn-close col-auto">
+				</button>
+			</div>
+		</div>`);
+    // static variables
+    static imports_promise;
+    static root;
+    static environment = TempLogger.ENV_UNKNOWN;
+    static with_webpage_console = false;
+    static with_log_file = false;
+    static NODE_VERSION;
+    static NV_MAJOR;
     /**
      * Create new TempLogger instance. Note almost all args are specified as keys in an options object.
      *
@@ -531,59 +612,9 @@ class TempLogger {
         return template.content.firstChild;
     }
 }
-// constants
-TempLogger.LEVEL_DEBUG = 0;
-TempLogger.LEVEL_INFO = 1;
-TempLogger.LEVEL_WARNING = 2;
-TempLogger.LEVEL_ERROR = 3;
-TempLogger.LEVEL_CRITICAL = 4;
-TempLogger.LEVEL_ALWAYS = 10;
-TempLogger.STR_DEBUG = 'DEBUG';
-TempLogger.STR_INFO = 'INFO';
-TempLogger.STR_WARNING = 'WARNING';
-TempLogger.STR_WARN = 'WARN';
-TempLogger.STR_ERROR = 'ERROR';
-TempLogger.STR_ERR = 'ERR';
-TempLogger.STR_CRITICAL = 'CRITICAL';
-TempLogger.STR_ALWAYS = 'ALWAYS';
-TempLogger.ENV_UNKNOWN = 'unknown';
-TempLogger.ENV_BACKEND = 'backend';
-TempLogger.ENV_FRONTEND = 'frontend';
-TempLogger.CONSOLE_METHOD = {
-    log: console.log,
-    info: console.info,
-    warn: console.warn,
-    error: console.error
-};
-TempLogger.STR_TO_LEVEL = {};
-TempLogger.LEVEL_TO_STR = {};
-TempLogger.LEVEL_TO_CLI_COLOR = {};
-TempLogger.LEVEL_TO_CONSOLE_METHOD = {};
-TempLogger.LEVEL_TO_ALERT_COLOR = {};
-TempLogger.LOG_FILE_DIR = './logs/';
-TempLogger.CSS_CLASS_PREFIX = 'temp-logger';
-TempLogger.CMP_CONSOLE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-console`;
-TempLogger.CMP_CONSOLE_DEFAULT = (`<div class="${TempLogger.CMP_CONSOLE_CLASS} fixed-top px-4 text-start">` +
-    `</div>`);
-TempLogger.CMP_MESSAGEBOX_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg-box`;
-TempLogger.CMP_MESSAGE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-msg`;
-TempLogger.CMP_CLOSE_CLASS = `${TempLogger.CSS_CLASS_PREFIX}-close`;
-TempLogger.CMP_MESSAGE_DEFAULT = (`<div class="${TempLogger.CMP_MESSAGE_CLASS} alert alert-dismissible my-2" role="alert">
-			<div class="row">
-				<div class="${TempLogger.CMP_MESSAGE_CLASS} col"></div>
-				<button 
-					type="button" aria-label="close"
-					class="${TempLogger.CMP_CLOSE_CLASS} btn-close col-auto">
-				</button>
-			</div>
-		</div>`);
-TempLogger.environment = TempLogger.ENV_UNKNOWN;
-TempLogger.with_webpage_console = false;
-TempLogger.with_log_file = false;
 TempLogger.imports_promise =
     Promise.all([
-        import('chalk')
-            .then((chalk_mod) => {
+        Promise.resolve().then(() => require('chalk')).then((chalk_mod) => {
             // console message coloring
             const chalk = chalk_mod.default;
             TempLogger.chalk = chalk;
@@ -599,8 +630,7 @@ TempLogger.imports_promise =
             // coloring not available
             TempLogger.CONSOLE_METHOD['log'](`error colored cli logs not available\n${err.stack}`);
         }),
-        import('sonic-boom')
-            .then((sonic) => {
+        Promise.resolve().then(() => require('sonic-boom')).then((sonic) => {
             // quick logging to files
             TempLogger.SonicBoom = sonic.default;
             TempLogger.CONSOLE_METHOD['log'](sonic.default);
