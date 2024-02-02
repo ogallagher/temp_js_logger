@@ -897,10 +897,14 @@ TempLogger.LEVEL_TO_ALERT_COLOR[TempLogger.LEVEL_ALWAYS] = 'secondary'
 
 let now = new Date()
 TempLogger.LOG_FILE_NAME = (
-	'templogger_' + 
-	`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}_` + 
-	`${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}` + 
-	'.log'
+	`templogger_`
+	+ `${now.getFullYear().toString().padStart(4, '0')}`
+  + `-${(now.getMonth()+1).toString().padStart(2, '0')}`
+  + `-${now.getDate().toString().padStart(2, '0')}_` 
+	+ `${now.getHours().toString().padStart(2, '0')}`
+  + `-${now.getMinutes().toString().padStart(2, '0')}`
+  + `-${now.getSeconds().toString().padStart(2, '0')}`
+	+ `.log`
 )
 now = undefined
 TempLogger.LOG_FILE_PATH = TempLogger.LOG_FILE_DIR + TempLogger.LOG_FILE_NAME
