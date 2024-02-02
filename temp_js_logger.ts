@@ -2,7 +2,7 @@
  * Owen Gallagher <github.com/ogallagher>
  * 
  * Temporary JS backend+frontend logger that patches console.log.
- * Written in common js, so no import/export keywords.
+ * Written in common js, so no import/export keywords. 
  */
 
 import SonicBoom from 'sonic-boom'
