@@ -436,7 +436,13 @@ class TempLogger {
 		
 		let close_btn: HTMLButtonElement = msgbox_el.getElementsByClassName(TempLogger.CMP_CLOSE_CLASS)[0]
 		close_btn.onclick = function(e: Event) {
-			msgbox_el.remove()
+			const fade_duration = 500
+			msgbox_el.style.transition = `opacity ${fade_duration/1000}s ease`
+			msgbox_el.style.opacity = 0
+
+			setTimeout(() => {
+				msgbox_el.remove()
+			}, fade_duration)
 		}
 		
 		document.getElementsByClassName(TempLogger.CMP_CONSOLE_CLASS)[0]
