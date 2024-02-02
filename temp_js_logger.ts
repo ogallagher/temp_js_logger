@@ -2,7 +2,7 @@
  * Owen Gallagher <github.com/ogallagher>
  * 
  * Temporary JS backend+frontend logger that patches console.log.
- * Written in common js, so no import/export keywords. 
+ * Written in common js, so no import/export keywords.
  */
 
 import SonicBoom from 'sonic-boom'
@@ -67,16 +67,19 @@ interface TempLoggerConstructorOptions {
 
 class TempLogger {
 	/**
-	 * 
+	 * Child loggers.
 	 */
 	children: Map<string, TempLogger>
 	/**
-	 * 
+	 * {@link TempLoggerConstructorOptions.parent}
 	 */
 	parent: TempLogger
 	level: number
 	level_gui: number
 	level_file: number
+	/**
+	 * Logger name with prefixed ancestors.
+	 */
 	name: any
 	with_timestamp: any
 	with_lineno: any
@@ -85,6 +88,9 @@ class TempLogger {
 	with_always_level_name: boolean
 	with_cli_colors: boolean
 	withlineno: any
+	/**
+	 * Logger name without prefixed ancestors.
+	 */
 	local_name: any
 	log_to_file: boolean
 
@@ -184,7 +190,7 @@ class TempLogger {
 	 *
 	 * @param constructor_opts Logger options.
 	 * 
-	 * @param replaced tbd
+	 * @param replaced Optional reference to existing logger that this instance will replace.
 	 */
 	constructor(
 		opts: TempLoggerConstructorOptions = {
@@ -293,16 +299,21 @@ class TempLogger {
 	/**
 	 * Log a message to the cli console, and gui if enabled.
 	 * 
-	 * @param {Object} data The data/message to log.
-	 * @param {String} console_method_key Optional console method name to use (usually `log`).
+	 * @param data The data/message to log.
+	 * @param console_method_key Optional console method name to use (usually `log`).
 	 */
-	log(data, console_method_key) {
+	log(data: object|string, console_method_key: string) {
 		let ts = ''
 		if (this.with_timestamp) {
 			ts = new Date().toISOString()
 		}
 		
-		let metadata = []
+		/**
+		 * Message metadata (ex. logger name, line number, log level) is flat list.
+		 * 
+		 * The number of elements in the list for display depends on the logger options.
+		 */
+		let metadata: any[] = []
 		
 		if (this.name !== undefined) {
 			metadata.push(this.name)
@@ -317,7 +328,7 @@ class TempLogger {
 		let level = TempLogger.LEVEL_ALWAYS
 		if (this.parse_level_prefix) {
 			// parse level from message prefix
-			if (typeof data == 'string') {
+			if (typeof data === 'string') {
 				let m = data.match(/^(\w+)[\s:]/)
 				
 				if (m != null) {
@@ -808,7 +819,10 @@ class TempLogger {
 	static remove_webpage_console() {
 		TempLogger.with_webpage_console = false
 		
-		$(`.${TempLogger.CMP_CONSOLE_CLASS}`).remove()
+		const consoles = document.getElementsByClassName(TempLogger.CMP_CONSOLE_CLASS)
+		for (let c=0; c < consoles.length; c++) {
+			consoles.item(c).remove()
+		}
 	}
 	
 	/**
@@ -855,7 +869,7 @@ Promise.all([
 	.then((sonic) => {
 		// quick logging to files
 		TempLogger.SonicBoom = sonic.default
-		TempLogger.CONSOLE_METHOD['log'](sonic.default)
+		// TempLogger.CONSOLE_METHOD['log'](sonic.default)
 	})
 	.catch((err) => {
 		// file
@@ -923,7 +937,9 @@ if (typeof exports != 'undefined') {
 	exports.TempLogger = TempLogger
 	exports.root = TempLogger.root
 	
-	// root constructor wrapper
+	/**
+	 * Root logger constructor wrapper.
+	 */
 	exports.config = function(opt) {
 		return TempLogger.config(opt).then((root) => {
 			exports.root = root
