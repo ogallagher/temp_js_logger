@@ -793,7 +793,13 @@ class TempLogger {
 				})
 				
 				process.on('exit', function() {
-					TempLogger.sonic.flushSync()
+					try {
+						TempLogger.sonic.flushSync()
+					}
+					catch (err) {
+						TempLogger.CONSOLE_METHOD['log'](`debug ignore sonic no flush. ${err}`)
+					}
+					
 					TempLogger.sonic.destroy()
 				})
 				
