@@ -7,30 +7,25 @@ import * as fs from 'fs'
 const INDEX_JS = './temp_js_logger.js'
 
 fs.readFile(INDEX_JS, {encoding: 'utf-8'}, (err, data) => {
-    if (err) {
-        console.log(`error unable to read ${INDEX_JS}`)
-        throw err
-    }
-    else {
-      fs.writeFile(INDEX_JS, condition_before_exports_property(data), () => {
-          console.log(`info wrote conditional exports property to ${INDEX_JS}`)
-      })
-    }
+  if (err) {
+    console.log(`error unable to read ${INDEX_JS}`)
+    throw err
+  }
+  else {
+    fs.writeFile(INDEX_JS, condition_before_exports_property(data), () => {
+      console.log(`info wrote conditional exports property to ${INDEX_JS}`)
+    })
+  }
 })
 
 function condition_before_exports_property(raw: string) {
   const exports_property = 'Object.defineProperty(exports, "__esModule"'
   let idx = raw.indexOf(exports_property)
-  if (idx != -1) {
-      if (raw[idx-1] !== '\n') {
-          console.log('warning exports property not at beginning of line; skip conditional insert')
-      }
-      else {
-          console.log(`info exports property found at ${INDEX_JS}:${idx}`)
-          const condition = '(typeof exports !== "undefined") && '
-          
-          return raw.slice(0, idx) + condition + restore_dynamic_import(raw.slice(idx))
-      }
+  if (idx !== -1 && raw[idx-1] === '\n') {
+    console.log(`info exports property found at ${INDEX_JS}:${idx}`)
+    const condition = '(typeof exports !== "undefined") && '
+    
+    return raw.slice(0, idx) + condition + restore_dynamic_import(raw.slice(idx))
   }
   else {
       console.log(`warning exports property not found in ${INDEX_JS}`)

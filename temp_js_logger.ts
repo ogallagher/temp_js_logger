@@ -5,62 +5,16 @@
  * Written in common js, so no import/export keywords.
  */
 
-import SonicBoom from 'sonic-boom'
-
 // typescript types interfaces
 
-declare var exports: any
 declare type ChalkInstance = any
+declare type SonicBoom = any
 
+/**
+ * See declarations .d.ts for full type definition.
+ */
 interface TempLoggerConstructorOptions {
-	/**
-	 * Logging level name, case insensitive.
-	 */
-	level?: number
-	/**
-	 * Logging level name for gui messages.
-	 */
-	level_gui?: number
-	/**
-	 * Include timestamp in message.
-	 */
-	with_timestamp?: boolean
-	/**
-	 * Logger name.
-	 */
-	name?: string
-	/**
-	 * Include caller line number in message.
-	 */
-	with_lineno?: boolean
-	/**
-	 * If incoming messages will be prefixed with a logging 
-	 * level string. If `false`, the console method (log, info, warn, error) is used to determine
-	 * the log level.
-	 */
-	parse_level_prefix?: boolean
-	/**
-	 * Include level name in message.
-	 */
-	with_level?: boolean
-	/**
-	 * Include `ALWAYS` as a level name in message if
-	 * no level is specified.
-	 */
-	with_always_level_name?: boolean
-	/**
-	 * Color messages by level in cli.
-	 */
-	with_cli_colors?: boolean
-	/**
-	 * Whether to output to a log file in a backend environment 
-	 * as well as `process.stdout`.
-	 */
-	log_to_file?: boolean
-	/**
-	 * Reference to parent logger.
-	 */
-	parent?: TempLogger
+	[key: string]: any
 }
 
 // class
@@ -526,7 +480,7 @@ class TempLogger {
 	 * 
 	 * @param {Object} constructor_opts Options passed to the root logger constructor.
 	 */
-	static config(constructor_opts) {
+	static config(constructor_opts?: TempLoggerConstructorOptions) {
 		TempLogger.root = new TempLogger(constructor_opts, TempLogger.root)
 		TempLogger.root.patch_console()
 		
@@ -943,7 +897,7 @@ if (typeof exports != 'undefined') {
 	// interpreter version
 	TempLogger.NODE_VERSION = process.version
 	TempLogger.NV_MAJOR = parseInt(
-		TempLogger.NODE_VERSION.substr(1, TempLogger.NODE_VERSION.indexOf('.'))
+		TempLogger.NODE_VERSION.substring(1, TempLogger.NODE_VERSION.indexOf('.'))
 	)
 	
 	exports.TempLogger = TempLogger
@@ -952,7 +906,7 @@ if (typeof exports != 'undefined') {
 	/**
 	 * Root logger constructor wrapper.
 	 */
-	exports.config = function(opt) {
+	exports.config = function(opt?: TempLoggerConstructorOptions) {
 		return TempLogger.config(opt).then((root) => {
 			exports.root = root
 		})
@@ -972,7 +926,7 @@ if (typeof exports != 'undefined') {
 	exports.get_level = TempLogger.get_level
 	exports.get_level_str = TempLogger.get_level_str
 	exports.get_level_gui = TempLogger.get_level_gui
-	exports.get_level_str = TempLogger.get_level_str
+	exports.get_level_gui_str = TempLogger.get_level_gui_str
 	exports.get_child = TempLogger.get_child
 	
 	// plain console methods. ex: temp_js_logger.CONSOLE_METHOD.log('plain log message')

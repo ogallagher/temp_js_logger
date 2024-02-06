@@ -1,20 +1,21 @@
 {
-    "compilerOptions": {
-        "target": "es2020",
-        "allowJs": false,
-        "module": "commonjs",
-        "sourceMap": true,
-        "strict": false,
-        "forceConsistentCasingInFileNames": true,
-        "noEmit": false,
-        "incremental": true,
-        "moduleResolution": "node",
-        "esModuleInterop": false
-    },
-    "exclude": [
-        "node_modules"
-    ],
-    "include": [
-        "**/*.ts"
-    ]
+  "compilerOptions": {
+    "target": "es2020",
+    "allowJs": false,
+    "module": "commonjs",
+    "sourceMap": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": false,
+    "incremental": true,
+    "moduleResolution": "node",
+    "esModuleInterop": false,
+    // as far as I can tell, the commonjs use of module.exports must 
+    // be described manually
+    "declaration": false
+  },
+  "exclude": [
+    "node_modules",
+    "**/*.js"
+  ]
 }

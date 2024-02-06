@@ -1,0 +1,7 @@
+*.map
+logs
+node_modules
+package-lock.json
+*.ts
+!*.d.ts
+tsconfig.tsbuildinfo

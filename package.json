@@ -3,6 +3,7 @@
   "version": "0.7.5",
   "description": "Temporary backend/frontend logging library that patches console.",
   "main": "temp_js_logger.js",
+  "types": "./temp_js_logger.d.ts",
   "scripts": {
     "test": "node test/temp_js_logger_cli.js",
     "test-cli": "node test/temp_js_logger_cli.js",
@@ -38,12 +39,5 @@
   "optionalDependencies": {
     "chalk": "^5.0.0",
     "sonic-boom": "^2.7.0"
-  },
-  "files": [
-    "test",
-    "temp_js_logger.js",
-    "readme.md",
-    "docs",
-    "license.txt"
-  ]
+  }
 }
