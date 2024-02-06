@@ -17,3 +17,4 @@ test/logs
 # etc
 local
 npm_env.sh
+**/.DS_Store
