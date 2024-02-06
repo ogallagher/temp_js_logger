@@ -8,7 +8,8 @@
     "test": "node test/temp_js_logger_cli.js",
     "test-cli": "node test/temp_js_logger_cli.js",
     "test-gui": "node test/temp_js_logger_webserver.js",
-    "build": "tsc && node build/build.js"
+    "build": "tsc && node build/build.js && npm run prepack",
+    "prepack": "cp temp_js_logger.js test/public/temp_js_logger.js"
   },
   "repository": {
     "type": "git",
